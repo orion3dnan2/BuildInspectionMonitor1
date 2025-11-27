@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BookEntry;
+use App\Models\Notification;
 use App\Models\Signature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -169,6 +170,8 @@ class BookEntryController extends Controller
         
         $book->update(['status' => 'submitted']);
         
+        Notification::createBookNotification($book, 'submitted', Auth::user());
+        
         return redirect()->route('books.show', $book)
             ->with('success', 'تم إرسال القيد للمدير للاعتماد');
     }
@@ -213,6 +216,8 @@ class BookEntryController extends Controller
             'manager_comment' => $request->comments,
         ]);
         
+        Notification::createBookNotification($book, 'approved', Auth::user());
+        
         return redirect()->route('books.show', $book)
             ->with('success', 'تم اعتماد القيد بنجاح');
     }
@@ -244,6 +249,8 @@ class BookEntryController extends Controller
             'manager_comment' => $request->reason,
         ]);
         
+        Notification::createBookNotification($book, 'rejected', Auth::user());
+        
         return redirect()->route('books.show', $book)
             ->with('success', 'تم رفض القيد');
     }
@@ -263,6 +270,8 @@ class BookEntryController extends Controller
             'status' => 'needs_modification',
             'manager_comment' => $request->reason,
         ]);
+        
+        Notification::createBookNotification($book, 'needs_modification', Auth::user());
         
         return redirect()->route('books.show', $book)
             ->with('success', 'تم إرجاع القيد للتعديل');

@@ -48,6 +48,36 @@ class User extends Authenticatable
         return $this->hasMany(Log::class);
     }
 
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class)->orderBy('created_at', 'desc');
+    }
+
+    public function unreadNotifications(): HasMany
+    {
+        return $this->hasMany(Notification::class)->whereNull('read_at')->orderBy('created_at', 'desc');
+    }
+
+    public function getUnreadNotificationsCountAttribute(): int
+    {
+        return $this->unreadNotifications()->count();
+    }
+
+    public function getPendingBooksCountAttribute(): int
+    {
+        if (!in_array($this->role, ['admin', 'supervisor'])) {
+            return 0;
+        }
+        return \App\Models\BookEntry::where('status', 'submitted')->count();
+    }
+
+    public function getPendingDocumentsCountAttribute(): int
+    {
+        return \App\Models\Document::where('assigned_to', $this->id)
+            ->whereIn('status', ['pending_review', 'pending_approval', 'needs_modification'])
+            ->count();
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

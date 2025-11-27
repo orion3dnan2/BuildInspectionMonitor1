@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\DocumentWorkflow;
 use App\Models\Department;
+use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -162,6 +163,8 @@ class DocumentController extends Controller
             'status' => 'pending',
         ]);
 
+        Notification::createDocumentNotification($document, 'assigned', auth()->user());
+
         return redirect()->route('admin.documents.show', $document)
             ->with('success', 'تم إرسال المستند للمراجعة');
     }
@@ -195,6 +198,8 @@ class DocumentController extends Controller
             'comments' => $validated['comments'],
             'status' => 'pending',
         ]);
+
+        Notification::createDocumentNotification($document, 'assigned', auth()->user());
 
         return redirect()->route('admin.documents.show', $document)
             ->with('success', 'تم إرسال المستند للمدير للاعتماد');
@@ -234,6 +239,8 @@ class DocumentController extends Controller
             'completed_at' => now(),
         ]);
 
+        Notification::createDocumentNotification($document, 'approved', auth()->user());
+
         return redirect()->route('admin.documents.show', $document)
             ->with('success', 'تم اعتماد المستند بنجاح');
     }
@@ -269,6 +276,8 @@ class DocumentController extends Controller
             'completed_at' => now(),
         ]);
 
+        Notification::createDocumentNotification($document, 'rejected', auth()->user());
+
         return redirect()->route('admin.documents.show', $document)
             ->with('success', 'تم رفض المستند');
     }
@@ -302,6 +311,8 @@ class DocumentController extends Controller
             'comments' => $validated['modification_notes'],
             'status' => 'pending',
         ]);
+
+        Notification::createDocumentNotification($document, 'needs_modification', auth()->user());
 
         return redirect()->route('admin.documents.show', $document)
             ->with('success', 'تم إرسال طلب التعديل');
