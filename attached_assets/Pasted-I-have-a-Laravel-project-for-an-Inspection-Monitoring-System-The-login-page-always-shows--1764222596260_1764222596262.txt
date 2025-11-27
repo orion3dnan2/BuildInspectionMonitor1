@@ -1,0 +1,66 @@
+I have a Laravel project for an Inspection & Monitoring System. 
+The login page always shows “بيانات الدخول غير صحيحة” even when using the correct admin credentials.
+I want you to fully diagnose AND fix this problem.
+
+Here is the exact issue:
+
+1) The login form is working visually, but authentication always fails.
+2) The seeded admin user (admin / Admin123! or admin / 123456) does NOT log in.
+3) No error messages appear except “credentials incorrect”.
+4) The project uses Laravel authentication (session-based), and the issue is likely coming from:
+   - Wrong authentication logic in the login controller
+   - Password hashing problem (password might not be hashed in database)
+   - The database seeder using plain password instead of bcrypt()
+   - Wrong user column used for login (username vs email)
+   - Guard or provider misconfiguration in config/auth.php
+   - Validation logic rejecting the input before login attempt
+   - The login attempt using the wrong field name (e.g. email instead of username)
+
+I want you to:
+
+### 1) Scan all these files:
+- app/Http/Controllers/AuthController or LoginController
+- routes/web.php
+- routes/api.php
+- config/auth.php
+- User model
+- database/seeders
+- login Blade view
+- Any middleware used for login
+- Any custom guards (if exist)
+
+### 2) Identify the exact cause of the failed login.
+
+### 3) Fix the problem completely:
+
+- Make sure the system logs in using:
+    username → not email
+    password → hashed password
+- Ensure the database contains a properly hashed admin password
+- Ensure Auth::attempt() uses:
+    ['username' => $request->username, 'password' => $request->password]
+- Fix any issue in guard configuration
+- Fix validation if it blocks login
+- Fix routes if middleware is incorrect
+
+### 4) Regenerate a clean, correct login logic:
+- Controller: correct validation + hashed password check
+- Seeder: hash password with bcrypt()
+- User model: ensure $fillable is correct
+- auth.php: ensure provider uses username not email
+- login.blade.php: correct input names
+
+### 5) Deliver:
+- Corrected controller code
+- Correct seeder
+- Correct User model
+- Correct auth.php configuration
+- Any route fixes
+- Any middleware fixes
+
+### 6) Finally:
+Test the login in your environment and confirm it works.
+
+Do NOT skip steps. 
+Do NOT give theoretical answers. 
+I need the actual fixed code for every file.
