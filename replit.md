@@ -44,6 +44,24 @@ This system allows officers to record and manage inspection records with full CR
 - Notes (ملاحظات)
 - Round Date (تاريخ الجولة)
 
+### Administrative System (النظام الإداري)
+
+#### HR Module (الموارد البشرية)
+- **Departments (الأقسام)**: Full CRUD for organizational units with parent/child hierarchy
+- **Employees (الموظفين)**: Complete employee management with contact info, hire dates, leave balances
+- **Attendance (الحضور)**: Daily check-in/out tracking with bulk entry, date/status filtering, and attendance reports
+- **Leave Requests (طلبات الإجازات)**: Leave request workflow with approval/rejection, balance tracking, and reason documentation
+
+#### Document Workflow System (نظام المراسلات)
+- **Document Types**: Internal memo, external letter, circular, decision, report
+- **Priority Levels**: Normal, urgent, very urgent
+- **Workflow Stages**: Draft → Pending Review → Pending Approval → Approved/Rejected/Needs Modification
+- **Electronic Signatures**: Canvas-based signature capture for manager approval
+- **File Attachments**: Word (.doc, .docx) and PDF upload support
+- **Inbox**: View documents pending user action
+- **My Documents**: Track created documents and their workflow status
+- **Print View**: Print-friendly document layout with signature
+
 ### UI Features
 - Modern, clean government-style admin panel
 - Full Arabic RTL support
@@ -69,7 +87,13 @@ app/
 │   │   ├── SettingController.php
 │   │   ├── UserController.php
 │   │   ├── StationController.php
-│   │   └── PortController.php
+│   │   ├── PortController.php
+│   │   └── Admin/
+│   │       ├── DepartmentController.php
+│   │       ├── EmployeeController.php
+│   │       ├── AttendanceController.php
+│   │       ├── LeaveRequestController.php
+│   │       └── DocumentController.php
 │   ├── Middleware/
 │   │   ├── AdminMiddleware.php
 │   │   └── RoleMiddleware.php
@@ -79,7 +103,13 @@ app/
 │   ├── Record.php
 │   ├── Station.php
 │   ├── Port.php
-│   └── Log.php
+│   ├── Log.php
+│   ├── Department.php
+│   ├── Employee.php
+│   ├── Attendance.php
+│   ├── LeaveRequest.php
+│   ├── Document.php
+│   └── DocumentWorkflow.php
 ├── Policies/
 │   ├── RecordPolicy.php
 │   └── UserPolicy.php
@@ -106,11 +136,41 @@ resources/views/
 │   └── print.blade.php
 ├── import/
 │   └── index.blade.php
-└── settings/
-    ├── index.blade.php
-    ├── users/
-    ├── stations/
-    └── ports/
+├── settings/
+│   ├── index.blade.php
+│   ├── users/
+│   ├── stations/
+│   └── ports/
+└── admin/
+    ├── departments/
+    │   ├── index.blade.php
+    │   ├── create.blade.php
+    │   ├── show.blade.php
+    │   └── edit.blade.php
+    ├── employees/
+    │   ├── index.blade.php
+    │   ├── create.blade.php
+    │   ├── show.blade.php
+    │   └── edit.blade.php
+    ├── attendances/
+    │   ├── index.blade.php
+    │   ├── create.blade.php
+    │   ├── edit.blade.php
+    │   ├── bulk-create.blade.php
+    │   └── report.blade.php
+    ├── leave-requests/
+    │   ├── index.blade.php
+    │   ├── create.blade.php
+    │   ├── show.blade.php
+    │   └── edit.blade.php
+    └── documents/
+        ├── index.blade.php
+        ├── create.blade.php
+        ├── show.blade.php
+        ├── edit.blade.php
+        ├── inbox.blade.php
+        ├── my-documents.blade.php
+        └── print.blade.php
 
 routes/
 ├── web.php
@@ -151,6 +211,12 @@ Using PostgreSQL (Neon) with the following tables:
 - `sessions` - Session management
 - `cache` - Application cache
 - `jobs` - Queue jobs
+- `departments` - Organizational departments with hierarchy
+- `employees` - Employee records with leave balances
+- `attendances` - Daily attendance records
+- `leave_requests` - Leave request workflow
+- `documents` - Document management with workflow states
+- `document_workflows` - Document workflow history and signatures
 
 ## Environment Variables
 
