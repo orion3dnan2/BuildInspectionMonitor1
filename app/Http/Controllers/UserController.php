@@ -44,7 +44,7 @@ class UserController extends Controller
             'username' => 'required|string|max:255|unique:users',
             'email' => 'nullable|email|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:admin,user',
+            'role' => 'required|in:admin,supervisor,user',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string|in:' . implode(',', array_keys(User::availablePermissions())),
             'system_access' => 'nullable|array',
@@ -59,7 +59,7 @@ class UserController extends Controller
 
         $systemAccess = $validated['role'] === 'admin' 
             ? array_keys(User::availableSystems()) 
-            : ($validated['system_access'] ?? []);
+            : ($validated['system_access'] ?? ['block_system']);
 
         $user = User::create([
             'name' => $validated['name'],
@@ -103,7 +103,7 @@ class UserController extends Controller
             'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'email' => ['nullable', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:6|confirmed',
-            'role' => 'required|in:admin,user',
+            'role' => 'required|in:admin,supervisor,user',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string|in:' . implode(',', array_keys(User::availablePermissions())),
             'system_access' => 'nullable|array',
@@ -118,7 +118,7 @@ class UserController extends Controller
 
         $systemAccess = $validated['role'] === 'admin' 
             ? array_keys(User::availableSystems()) 
-            : ($validated['system_access'] ?? []);
+            : ($validated['system_access'] ?? ['block_system']);
 
         $data = [
             'name' => $validated['name'],

@@ -96,7 +96,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/settings/users/{user}', [UserController::class, 'destroy'])->name('settings.users.destroy');
     });
 
-    Route::prefix('admin')->name('admin.')->middleware('role:admin,supervisor')->group(function () {
+    Route::prefix('admin')->name('admin.')->middleware(['role:admin,supervisor', 'system:admin_system'])->group(function () {
         Route::resource('departments', DepartmentController::class);
         
         Route::resource('employees', EmployeeController::class);

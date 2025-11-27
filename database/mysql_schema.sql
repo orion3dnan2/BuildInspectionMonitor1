@@ -23,18 +23,17 @@ CREATE TABLE `users` (
     `username` VARCHAR(255) NOT NULL COMMENT 'اسم الدخول',
     `password` VARCHAR(255) NOT NULL COMMENT 'كلمة المرور',
     `role` ENUM('admin', 'supervisor', 'user') NOT NULL DEFAULT 'user' COMMENT 'الدور',
-    `can_create_records` TINYINT(1) NOT NULL DEFAULT 1 COMMENT 'صلاحية إنشاء السجلات',
-    `can_edit_records` TINYINT(1) NOT NULL DEFAULT 1 COMMENT 'صلاحية تعديل السجلات',
-    `can_delete_records` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'صلاحية حذف السجلات',
-    `can_import` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'صلاحية الاستيراد',
-    `can_export` TINYINT(1) NOT NULL DEFAULT 1 COMMENT 'صلاحية التصدير',
-    `can_manage_users` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'صلاحية إدارة المستخدمين',
-    `can_manage_settings` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'صلاحية إدارة الإعدادات',
+    `permissions` JSON NULL COMMENT 'الصلاحيات المتاحة',
+    `system_access` JSON NULL COMMENT 'الأنظمة المتاحة للوصول',
+    `rank` VARCHAR(255) NULL COMMENT 'الرتبة',
+    `office` VARCHAR(255) NULL COMMENT 'المكتب',
+    `email` VARCHAR(255) NULL COMMENT 'البريد الإلكتروني',
     `remember_token` VARCHAR(100) NULL,
     `created_at` TIMESTAMP NULL,
     `updated_at` TIMESTAMP NULL,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `users_username_unique` (`username`)
+    UNIQUE KEY `users_username_unique` (`username`),
+    UNIQUE KEY `users_email_unique` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
@@ -408,13 +407,17 @@ CREATE TABLE `migrations` (
 -- =====================================================
 
 -- إدخال مستخدم المدير الافتراضي
-INSERT INTO `users` (`name`, `username`, `password`, `role`, `can_create_records`, `can_edit_records`, `can_delete_records`, `can_import`, `can_export`, `can_manage_users`, `can_manage_settings`, `created_at`, `updated_at`) VALUES
-('مدير النظام', 'admin', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 1, 1, 1, 1, 1, 1, 1, NOW(), NOW()),
-('المشرف', 'supervisor', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'supervisor', 1, 1, 1, 1, 1, 0, 1, NOW(), NOW()),
-('مستخدم عادي', 'user1', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'user', 1, 0, 0, 0, 1, 0, 0, NOW(), NOW());
+INSERT INTO `users` (`name`, `username`, `password`, `role`, `permissions`, `system_access`, `created_at`, `updated_at`) VALUES
+('مدير النظام', 'admin', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', '["manage_users","manage_settings","create_records","edit_records","delete_records","import_data"]', '["block_system","admin_system"]', NOW(), NOW()),
+('المشرف', 'supervisor', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'supervisor', '["manage_settings","create_records","edit_records","import_data"]', '["block_system","admin_system"]', NOW(), NOW()),
+('مستخدم عادي', 'user1', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'user', '["create_records"]', '["block_system"]', NOW(), NOW());
 
 -- ملاحظة: كلمة المرور الافتراضية هي: password
 -- يجب تغييرها بعد تسجيل الدخول
+-- 
+-- الأنظمة المتاحة (system_access):
+-- block_system = نظام الحجب والتفتيش
+-- admin_system = النظام الإداري
 
 -- إدخال بعض المحافظات كمخافر
 INSERT INTO `stations` (`name`, `governorate`, `created_at`, `updated_at`) VALUES

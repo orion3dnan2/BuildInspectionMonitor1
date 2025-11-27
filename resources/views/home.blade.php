@@ -4,7 +4,18 @@
 
 @section('content')
 @php
-    $isAdminSection = request('section') === 'admin';
+    $user = auth()->user();
+    $canAccessBlockSystem = $user->canAccessBlockSystem();
+    $canAccessAdminSystem = $user->canAccessAdminSystem();
+    
+    // Determine which section to show
+    if (request('section') === 'admin' && $canAccessAdminSystem) {
+        $isAdminSection = true;
+    } elseif (!$canAccessBlockSystem && $canAccessAdminSystem) {
+        $isAdminSection = true;
+    } else {
+        $isAdminSection = false;
+    }
 @endphp
 
 <div class="text-center mb-10">
@@ -17,6 +28,7 @@
     <p class="text-slate-400 text-lg">النظام الإلكتروني الموحد للرقابة الحكومية</p>
 </div>
 
+@if($canAccessBlockSystem && $canAccessAdminSystem)
 <div class="flex justify-center mb-10">
     <div class="inline-flex bg-white rounded-xl border border-slate-200 p-1.5">
         <a href="{{ route('home') }}" class="flex items-center gap-3 px-8 py-3 rounded-lg font-medium transition {{ !$isAdminSection ? 'bg-slate-100 text-slate-700' : 'text-slate-400 hover:text-slate-600' }}">
@@ -33,7 +45,31 @@
         </a>
     </div>
 </div>
+@elseif($canAccessBlockSystem)
+<div class="flex justify-center mb-10">
+    <div class="inline-flex bg-white rounded-xl border border-slate-200 p-1.5">
+        <span class="flex items-center gap-3 px-8 py-3 rounded-lg font-medium bg-slate-100 text-slate-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+            </svg>
+            نظام الحجب
+        </span>
+    </div>
+</div>
+@elseif($canAccessAdminSystem)
+<div class="flex justify-center mb-10">
+    <div class="inline-flex bg-white rounded-xl border border-slate-200 p-1.5">
+        <span class="flex items-center gap-3 px-8 py-3 rounded-lg font-medium bg-slate-100 text-slate-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            النظام الإداري
+        </span>
+    </div>
+</div>
+@endif
 
+@if($canAccessBlockSystem)
 <div id="content-blocks" class="{{ $isAdminSection ? 'hidden' : '' }}">
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <a href="{{ route('dashboard') }}" class="block bg-white rounded-xl hover:shadow-lg transition p-8 text-center group border border-slate-200">
@@ -104,7 +140,9 @@
         @endif
     </div>
 </div>
+@endif
 
+@if($canAccessAdminSystem)
 <div id="content-admin" class="{{ !$isAdminSection ? 'hidden' : '' }}">
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         @if(auth()->user()->canManageSettings())
@@ -180,6 +218,7 @@
         @endif
     </div>
 </div>
+@endif
 
 <footer class="mt-12 pt-6 border-t border-slate-200 flex justify-between items-center text-slate-400">
     <span>الإصدار 1.0.0</span>

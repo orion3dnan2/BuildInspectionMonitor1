@@ -80,6 +80,11 @@
                         <span class="text-sm text-slate-700">مدير (جميع الصلاحيات)</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="role" value="supervisor" {{ old('role') == 'supervisor' ? 'checked' : '' }} 
+                            class="w-4 h-4 text-sky-500 border-slate-300 focus:ring-sky-400" id="role_supervisor">
+                        <span class="text-sm text-slate-700">مشرف (صلاحيات مخصصة)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="role" value="user" {{ old('role', 'user') == 'user' ? 'checked' : '' }} 
                             class="w-4 h-4 text-sky-500 border-slate-300 focus:ring-sky-400" id="role_user">
                         <span class="text-sm text-slate-700">مستخدم (صلاحيات مخصصة)</span>
@@ -136,6 +141,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const adminRadio = document.getElementById('role_admin');
+    const supervisorRadio = document.getElementById('role_supervisor');
     const userRadio = document.getElementById('role_user');
     const permissionsSection = document.getElementById('permissions_section');
     const systemAccessSection = document.getElementById('system_access_section');
@@ -161,6 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     adminRadio.addEventListener('change', toggleSections);
+    supervisorRadio.addEventListener('change', toggleSections);
     userRadio.addEventListener('change', toggleSections);
     toggleSections();
 });
