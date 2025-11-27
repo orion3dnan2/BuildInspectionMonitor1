@@ -13,10 +13,20 @@ class SearchController extends Controller
         $records = null;
         $searched = false;
 
-        if ($request->hasAny(['record_number', 'military_id', 'name', 'governorate', 'rank', 'station', 'date_from', 'date_to'])) {
+        if ($request->hasAny(['search', 'record_number', 'military_id', 'name', 'governorate', 'rank', 'station', 'action_type', 'date_from', 'date_to'])) {
             $searched = true;
             
             $records = Record::with('creator')
+                ->when($request->search, function ($query, $value) {
+                    $query->where(function ($q) use ($value) {
+                        $q->where('record_number', 'like', "%{$value}%")
+                          ->orWhere('military_id', 'like', "%{$value}%")
+                          ->orWhere('first_name', 'like', "%{$value}%")
+                          ->orWhere('second_name', 'like', "%{$value}%")
+                          ->orWhere('third_name', 'like', "%{$value}%")
+                          ->orWhere('fourth_name', 'like', "%{$value}%");
+                    });
+                })
                 ->when($request->record_number, function ($query, $value) {
                     $query->where('record_number', 'like', "%{$value}%");
                 })
@@ -30,6 +40,9 @@ class SearchController extends Controller
                           ->orWhere('third_name', 'like', "%{$value}%")
                           ->orWhere('fourth_name', 'like', "%{$value}%");
                     });
+                })
+                ->when($request->action_type, function ($query, $value) {
+                    $query->where('action_type', 'like', "%{$value}%");
                 })
                 ->filterByGovernorate($request->governorate)
                 ->filterByRank($request->rank)
