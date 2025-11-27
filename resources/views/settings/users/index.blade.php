@@ -3,7 +3,7 @@
 @section('title', 'إدارة المستخدمين - نظام الرقابة والتفتيش')
 
 @section('content')
-<div class="max-w-5xl mx-auto">
+<div class="w-full">
     <div class="mb-6">
         <a href="{{ route('home') }}" class="inline-flex items-center text-slate-500 hover:text-slate-700 text-sm mb-4 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

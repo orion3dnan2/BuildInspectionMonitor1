@@ -3,7 +3,7 @@
 @section('title', 'تعديل مستخدم - نظام الرقابة والتفتيش')
 
 @section('content')
-<div class="max-w-4xl mx-auto">
+<div class="max-w-6xl">
     <div class="mb-6">
         <a href="{{ route('settings.users.index') }}" class="inline-flex items-center text-slate-500 hover:text-slate-700 text-sm mb-4">
             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
