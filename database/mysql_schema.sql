@@ -262,6 +262,58 @@ CREATE TABLE `document_workflows` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
+-- جدول دفتر القيد (book_entries)
+-- =====================================================
+DROP TABLE IF EXISTS `book_entries`;
+CREATE TABLE `book_entries` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `book_number` VARCHAR(255) NOT NULL COMMENT 'رقم القيد',
+    `book_title` VARCHAR(255) NOT NULL COMMENT 'عنوان الكتاب',
+    `book_type` ENUM('incoming', 'outgoing', 'internal', 'circular', 'decision') NOT NULL DEFAULT 'incoming' COMMENT 'نوع الكتاب',
+    `date_written` DATE NOT NULL COMMENT 'تاريخ الكتابة',
+    `description` TEXT NULL COMMENT 'الوصف',
+    `writer_name` VARCHAR(255) NOT NULL COMMENT 'اسم الكاتب',
+    `writer_rank` VARCHAR(255) NULL COMMENT 'رتبة الكاتب',
+    `writer_office` VARCHAR(255) NULL COMMENT 'مكتب الكاتب',
+    `status` ENUM('draft', 'submitted', 'approved', 'rejected', 'needs_modification') NOT NULL DEFAULT 'draft' COMMENT 'الحالة',
+    `manager_comment` TEXT NULL COMMENT 'ملاحظات المدير',
+    `created_by` BIGINT UNSIGNED NOT NULL COMMENT 'منشئ القيد',
+    `approved_by` BIGINT UNSIGNED NULL COMMENT 'معتمد بواسطة',
+    `approved_at` TIMESTAMP NULL COMMENT 'تاريخ الاعتماد',
+    `created_at` TIMESTAMP NULL,
+    `updated_at` TIMESTAMP NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `book_entries_book_number_unique` (`book_number`),
+    KEY `book_entries_created_by_foreign` (`created_by`),
+    KEY `book_entries_approved_by_foreign` (`approved_by`),
+    CONSTRAINT `book_entries_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `book_entries_approved_by_foreign` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- جدول التوقيعات الإلكترونية (signatures)
+-- =====================================================
+DROP TABLE IF EXISTS `signatures`;
+CREATE TABLE `signatures` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT UNSIGNED NOT NULL COMMENT 'معرف المستخدم الموقع',
+    `signable_type` VARCHAR(255) NOT NULL COMMENT 'نوع النموذج الموقع عليه',
+    `signable_id` BIGINT UNSIGNED NOT NULL COMMENT 'معرف النموذج الموقع عليه',
+    `signature_data` LONGTEXT NOT NULL COMMENT 'بيانات التوقيع (Base64)',
+    `signature_hash` VARCHAR(255) NOT NULL COMMENT 'هاش التوقيع للتحقق',
+    `action` ENUM('approved', 'rejected', 'reviewed') NOT NULL COMMENT 'الإجراء',
+    `comments` TEXT NULL COMMENT 'التعليقات',
+    `ip_address` VARCHAR(45) NULL COMMENT 'عنوان IP',
+    `created_at` TIMESTAMP NULL,
+    `updated_at` TIMESTAMP NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `signatures_signature_hash_unique` (`signature_hash`),
+    KEY `signatures_user_id_foreign` (`user_id`),
+    KEY `signatures_signable_index` (`signable_type`, `signable_id`),
+    CONSTRAINT `signatures_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
 -- جدول الجلسات (sessions)
 -- =====================================================
 DROP TABLE IF EXISTS `sessions`;

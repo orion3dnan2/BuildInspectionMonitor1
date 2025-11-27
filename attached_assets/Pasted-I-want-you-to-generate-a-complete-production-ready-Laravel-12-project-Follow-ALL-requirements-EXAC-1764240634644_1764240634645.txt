@@ -1,0 +1,286 @@
+I want you to generate a complete, production-ready Laravel 12 project.
+Follow ALL requirements EXACTLY and do NOT ask me questions.
+Just build the full system from start to finish.
+
+📌 1) PROJECT NAME
+
+Inspection & Monitoring System
+
+📌 2) TECHNOLOGY
+
+Use:
+
+PHP 8.2
+
+Laravel 12
+
+Blade (No React)
+
+MySQL database
+
+Vite
+
+TailwindCSS
+
+Arabic RTL support
+
+📌 3) SYSTEM DESCRIPTION
+
+Build a complete Inspection & Monitoring System for government inspection teams.
+
+The system records:
+
+record_number
+
+outgoing_number
+
+officer_name
+
+rank
+
+office_name
+
+inspection_date
+
+notes
+
+created_by (user)
+
+And includes full workflow with manager approval.
+
+📌 4) USER ROLES
+Admin
+
+Full access
+
+Manage users
+
+Manage inspections
+
+Approve / Reject / Request changes
+
+Inspector
+
+Login
+
+Add inspection report
+
+Edit own records
+
+Submit to manager for review
+
+📌 5) AUTHENTICATION
+
+Laravel Breeze (Blade version)
+
+Login / Logout / Forgot password
+
+Role middleware (admin, inspector)
+
+📌 6) MAIN MODULES
+A) Users CRUD
+
+Fields:
+
+name
+
+username
+
+password
+
+rank
+
+office
+
+role
+
+B) Inspection Reports CRUD
+
+Fields:
+
+record_number
+
+outgoing_number
+
+officer_name
+
+rank
+
+office_name
+
+inspection_date
+
+notes
+
+status (draft, submitted, approved, reject_for_edit)
+
+manager_comment
+
+created_by
+
+📌 7) NEW MODULE → Book Entry Page
+
+Add a new page named:
+
+"Book Entry"
+
+Fields:
+
+book_number
+
+book_title
+
+book_type
+
+date_written
+
+description
+
+writer_name
+
+writer_rank
+
+writer_office
+
+Actions:
+
+Save
+
+Send to Manager
+
+Manager Approval with e-signature
+
+Manager reject with reason
+
+📌 8) WORKFLOW LOGIC
+Inspector
+
+Creates inspection/book
+
+Saves as draft
+
+Click button "Send to Manager"
+
+Manager
+
+When manager opens submission:
+
+Show document
+
+Show “Approve + e-signature” button
+
+Show “Request Edit” button
+
+Request edit must include a written reason
+
+Status updates automatically
+
+📌 9) ELECTRONIC SIGNATURE
+
+When admin/manager approves:
+
+Generate signature image automatically
+
+Store signature_hash in database
+
+Show signature on the approved report page
+
+📌 10) UI/UX REQUIREMENTS
+
+RTL layout
+
+Dark/Light mode
+
+Clean government-style UI
+
+Beautiful tables
+
+Sidebar + Topbar
+
+Modern form layout
+
+Validation messages clearly shown
+
+No ugly colors (use professional palette #0D1B2A, #1B263B, #415A77, #E0E1DD)
+
+📌 11) FILE CLEANUP REQUIREMENTS
+
+Before finishing:
+
+Remove ALL unnecessary files
+
+Remove duplicate folders
+
+Remove temp code
+
+Keep ONLY Laravel required structure
+
+Run global cleanup
+
+Ensure clean & professional code
+
+Organize controllers, models, migrations perfectly
+
+📌 12) DATABASE
+
+Use MySQL only.
+
+Create migrations for:
+
+users
+
+inspection_reports
+
+book_entries
+
+signatures
+
+role assignments
+
+Seed admin user:
+
+username: admin
+password: Admin123!
+role: admin
+
+📌 13) ROUTES
+
+Create full routes:
+
+/login
+
+/dashboard
+
+/inspections (CRUD)
+
+/books (CRUD)
+
+/books/send/{id}
+
+/books/approve/{id}
+
+/books/request-edit/{id}
+
+/profile
+
+📌 14) FINAL OUTPUT REQUIRED
+
+When finished, you MUST deliver:
+
+✔ Full Laravel project
+✔ Cleaned code
+✔ Fully working
+✔ MySQL-ready
+✔ All pages and views included
+✔ Admin + inspector dashboards
+✔ All workflow buttons
+✔ Electronic signature system
+✔ Arabic RTL layout
+✔ Instructions for running the system
+
+Do NOT leave anything incomplete.
+
+**Build the entire system now.
+
+Start coding immediately.
+Do NOT ask me questions.**

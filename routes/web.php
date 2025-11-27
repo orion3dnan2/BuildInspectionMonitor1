@@ -11,6 +11,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\StationController;
 use App\Http\Controllers\PortController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\BookEntryController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\AttendanceController;
@@ -44,6 +45,24 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/print', [ReportController::class, 'print'])->name('reports.print');
+    
+    Route::get('/books', [BookEntryController::class, 'index'])->name('books.index');
+    Route::get('/books/create', [BookEntryController::class, 'create'])->name('books.create');
+    Route::post('/books', [BookEntryController::class, 'store'])->name('books.store');
+    Route::get('/books/my-books', [BookEntryController::class, 'myBooks'])->name('books.my-books');
+    Route::get('/books/{book}', [BookEntryController::class, 'show'])->name('books.show');
+    Route::get('/books/{book}/edit', [BookEntryController::class, 'edit'])->name('books.edit');
+    Route::put('/books/{book}', [BookEntryController::class, 'update'])->name('books.update');
+    Route::delete('/books/{book}', [BookEntryController::class, 'destroy'])->name('books.destroy');
+    Route::post('/books/{book}/send', [BookEntryController::class, 'sendToManager'])->name('books.send');
+    Route::get('/books/{book}/print', [BookEntryController::class, 'print'])->name('books.print');
+    
+    Route::middleware('role:admin,supervisor')->group(function () {
+        Route::get('/books/inbox', [BookEntryController::class, 'inbox'])->name('books.inbox');
+        Route::post('/books/{book}/approve', [BookEntryController::class, 'approve'])->name('books.approve');
+        Route::post('/books/{book}/reject', [BookEntryController::class, 'reject'])->name('books.reject');
+        Route::post('/books/{book}/request-edit', [BookEntryController::class, 'requestEdit'])->name('books.request-edit');
+    });
     
     Route::middleware('role:admin,supervisor')->group(function () {
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');

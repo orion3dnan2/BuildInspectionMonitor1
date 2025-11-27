@@ -26,6 +26,17 @@ This system allows officers to record and manage inspection records with full CR
 - Excel import functionality
 - Print-friendly report pages
 - Home page with Block System and Administrative System tabs
+- Dark/Light mode toggle with localStorage persistence
+
+### Book Entry Module (دفتر القيد)
+- **Book Types**: Incoming, outgoing, internal, circular, decision
+- **Workflow**: Draft → Submitted → Approved/Rejected/Needs Modification
+- **Electronic Signatures**: Canvas-based digital signature capture
+- **Signature Verification**: SHA-256 hash for authenticity verification
+- **Manager Approval**: E-signature required for approval
+- **Rejection/Edit Requests**: Manager can reject or request modifications with reasons
+- **Authorization**: Owner-based access control with supervisor/admin override
+- **Print View**: Print-friendly layout with signature and verification code
 
 ### User Roles
 - **Admin (مدير)**: Full access to all features including user management and settings
@@ -88,6 +99,7 @@ app/
 │   │   ├── UserController.php
 │   │   ├── StationController.php
 │   │   ├── PortController.php
+│   │   ├── BookEntryController.php
 │   │   └── Admin/
 │   │       ├── DepartmentController.php
 │   │       ├── EmployeeController.php
@@ -109,7 +121,9 @@ app/
 │   ├── Attendance.php
 │   ├── LeaveRequest.php
 │   ├── Document.php
-│   └── DocumentWorkflow.php
+│   ├── DocumentWorkflow.php
+│   ├── BookEntry.php
+│   └── Signature.php
 ├── Policies/
 │   ├── RecordPolicy.php
 │   └── UserPolicy.php
@@ -136,6 +150,14 @@ resources/views/
 │   └── print.blade.php
 ├── import/
 │   └── index.blade.php
+├── books/
+│   ├── index.blade.php
+│   ├── create.blade.php
+│   ├── show.blade.php
+│   ├── edit.blade.php
+│   ├── inbox.blade.php
+│   ├── my-books.blade.php
+│   └── print.blade.php
 ├── settings/
 │   ├── index.blade.php
 │   ├── users/
@@ -217,6 +239,8 @@ Using PostgreSQL (Neon) with the following tables:
 - `leave_requests` - Leave request workflow
 - `documents` - Document management with workflow states
 - `document_workflows` - Document workflow history and signatures
+- `book_entries` - Book entry management with approval workflow
+- `signatures` - Electronic signatures with hash verification
 
 ## Environment Variables
 
