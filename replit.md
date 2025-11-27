@@ -9,9 +9,10 @@ This system allows officers to record daily inspection reports for multiple offi
 ## Stack
 
 - **Backend**: Laravel 12 with PHP 8.2+
-- **Database**: PostgreSQL
+- **Database**: PostgreSQL (Neon)
 - **Frontend**: Blade templates with TailwindCSS
 - **Authentication**: Laravel session-based auth + Sanctum for API
+- **Session Driver**: File-based sessions
 
 ## Features
 
@@ -33,6 +34,7 @@ This system allows officers to record daily inspection reports for multiple offi
 - Responsive layout with sidebar navigation
 - Professional forms with validation messages
 - Data tables with pagination and search
+- Quick login cards on login page for testing
 
 ## Project Structure
 
@@ -85,26 +87,28 @@ routes/
 - `PUT /api/reports/{id}` - Update report
 - `DELETE /api/reports/{id}` - Delete report (admin only)
 
-## Default Credentials
+## Test Credentials (Simple for Testing)
 
 - **Admin Account**:
   - Username: `admin`
-  - Password: `Admin123!`
+  - Password: `123456`
 
 - **Inspector Accounts**:
-  - Username: `inspector1` / Password: `Inspector123!`
-  - Username: `inspector2` / Password: `Inspector123!`
+  - Username: `inspector1` / Password: `123456`
+  - Username: `inspector2` / Password: `123456`
 
 ## Running the Application
 
-The application runs automatically on port 5000 using:
+The application runs on port 5000 using:
 ```bash
-php artisan serve --host=0.0.0.0 --port=5000
+php artisan serve --host=0.0.0.0 --port=5000 --no-reload
 ```
+
+**Important**: The `--no-reload` flag is required because Laravel's `ServeCommand` filters environment variables by default. Without this flag, PostgreSQL credentials (DATABASE_URL, PGHOST, etc.) are not passed to PHP child processes.
 
 ## Database
 
-Using PostgreSQL with the following tables:
+Using PostgreSQL (Neon) with the following tables:
 - `users` - System users with roles
 - `inspection_reports` - Inspection report records (soft deletes enabled)
 - `activity_logs` - Activity tracking
@@ -114,10 +118,11 @@ Using PostgreSQL with the following tables:
 
 ## Environment Variables
 
-Required environment variables are automatically configured:
+Required environment variables are automatically configured by Replit:
 - `DATABASE_URL` - PostgreSQL connection string
-- `DB_CONNECTION=pgsql`
-- `APP_LOCALE=ar` - Arabic locale
+- `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` - Individual PostgreSQL credentials
+
+The `bootstrap/app.php` file ensures these environment variables are loaded into PHP's environment.
 
 ## Development Notes
 
@@ -125,3 +130,13 @@ Required environment variables are automatically configured:
 - Policies control authorization for reports and users
 - Activity logging tracks all CRUD operations
 - Soft deletes enabled for inspection reports
+- Session driver set to `file` for simplicity
+- Quick login cards on login page show credentials for easy testing
+
+## Technical Notes
+
+### Environment Variable Handling
+Laravel's `ServeCommand` filters environment variables when spawning child processes. The `--no-reload` flag bypasses this filtering, allowing PostgreSQL credentials to pass through. Additionally, `bootstrap/app.php` explicitly sets these variables in PHP's environment.
+
+### Session Configuration
+Sessions are stored in files (`storage/framework/sessions/`) rather than the database to avoid potential connection issues during development.

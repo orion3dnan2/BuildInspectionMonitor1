@@ -85,17 +85,16 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DATABASE_URL'),
-            'host' => env('PGHOST', '127.0.0.1'),
-            'port' => env('PGPORT', '5432'),
-            'database' => env('PGDATABASE', 'laravel'),
-            'username' => env('PGUSER', 'root'),
-            'password' => env('PGPASSWORD', ''),
+            'host' => getenv('PGHOST') ?: ($_SERVER['PGHOST'] ?? ($_ENV['PGHOST'] ?? env('PGHOST', '127.0.0.1'))),
+            'port' => getenv('PGPORT') ?: ($_SERVER['PGPORT'] ?? ($_ENV['PGPORT'] ?? env('PGPORT', '5432'))),
+            'database' => getenv('PGDATABASE') ?: ($_SERVER['PGDATABASE'] ?? ($_ENV['PGDATABASE'] ?? env('PGDATABASE', 'laravel'))),
+            'username' => getenv('PGUSER') ?: ($_SERVER['PGUSER'] ?? ($_ENV['PGUSER'] ?? env('PGUSER', 'root'))),
+            'password' => getenv('PGPASSWORD') ?: ($_SERVER['PGPASSWORD'] ?? ($_ENV['PGPASSWORD'] ?? env('PGPASSWORD', ''))),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => 'prefer',
+            'sslmode' => 'require',
         ],
 
         'sqlsrv' => [

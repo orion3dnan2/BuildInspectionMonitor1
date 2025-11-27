@@ -13,7 +13,7 @@ APP_LOCALE = "ar"
 APP_FALLBACK_LOCALE = "en"
 APP_FAKER_LOCALE = "ar_SA"
 DB_CONNECTION = "pgsql"
-SESSION_DRIVER = "database"
+SESSION_DRIVER = "file"
 SESSION_LIFETIME = "120"
 CACHE_STORE = "database"
 QUEUE_CONNECTION = "database"
@@ -34,25 +34,21 @@ args = "Laravel Server"
 name = "Laravel Server"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "php artisan serve --host=0.0.0.0 --port=5000"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd /home/runner/workspace && php artisan serve --host=0.0.0.0 --port=5000 --no-reload"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 40991
+localPort = 43769
 externalPort = 3000
-
-[[ports]]
-localPort = 44621
-externalPort = 3001
 
 [nix]
 channel = "stable-25_05"
