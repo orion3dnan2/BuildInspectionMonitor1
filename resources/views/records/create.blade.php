@@ -166,6 +166,8 @@
                         <th class="px-4 py-3 text-right font-medium text-slate-500">الاسم</th>
                         <th class="px-4 py-3 text-right font-medium text-slate-500">الرتبة</th>
                         <th class="px-4 py-3 text-right font-medium text-slate-500">المحافظة</th>
+                        <th class="px-4 py-3 text-right font-medium text-slate-500">نوع الإجراء</th>
+                        <th class="px-4 py-3 text-right font-medium text-slate-500">الملاحظات المدونة</th>
                         <th class="px-4 py-3 text-right font-medium text-slate-500">التاريخ</th>
                     </tr>
                 </thead>
@@ -176,6 +178,8 @@
                         <td class="px-4 py-3 text-slate-600">{{ $record->full_name }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $record->rank ?? '-' }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $record->governorate ?? '-' }}</td>
+                        <td class="px-4 py-3 text-slate-600">{{ $record->action_type ?? '-' }}</td>
+                        <td class="px-4 py-3 text-slate-600 max-w-xs truncate">{{ $record->notes ?? '-' }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $record->round_date?->format('Y-m-d') ?? '-' }}</td>
                     </tr>
                     @endforeach

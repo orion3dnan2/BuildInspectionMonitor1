@@ -183,6 +183,8 @@
                         <th class="px-3 py-3 text-right font-semibold text-slate-600">الرتبة</th>
                         <th class="px-3 py-3 text-right font-semibold text-slate-600">المحافظة</th>
                         <th class="px-3 py-3 text-right font-semibold text-slate-600">المخفر/المنفذ</th>
+                        <th class="px-3 py-3 text-right font-semibold text-slate-600">نوع الإجراء</th>
+                        <th class="px-3 py-3 text-right font-semibold text-slate-600">الملاحظات المدونة</th>
                         <th class="px-3 py-3 text-right font-semibold text-slate-600">تاريخ الجولة</th>
                         <th class="px-3 py-3 text-center font-semibold text-slate-600">الإجراءات</th>
                     </tr>
@@ -197,6 +199,8 @@
                         <td class="px-3 py-3 text-slate-600">{{ $record->rank ?? '-' }}</td>
                         <td class="px-3 py-3 text-slate-600">{{ $record->governorate ?? '-' }}</td>
                         <td class="px-3 py-3 text-slate-600">{{ $record->station ?? $record->ports ?? '-' }}</td>
+                        <td class="px-3 py-3 text-slate-600">{{ $record->action_type ?? '-' }}</td>
+                        <td class="px-3 py-3 text-slate-600 max-w-xs truncate" title="{{ $record->notes ?? '' }}">{{ Str::limit($record->notes, 30) ?? '-' }}</td>
                         <td class="px-3 py-3 text-slate-600">{{ $record->round_date?->format('Y-m-d') ?? '-' }}</td>
                         <td class="px-3 py-3">
                             <div class="flex items-center justify-center gap-2">
