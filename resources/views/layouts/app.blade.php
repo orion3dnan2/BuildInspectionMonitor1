@@ -132,11 +132,14 @@
                         <span class="text-base">جميع المستندات</span>
                     </a>
 
-                    <a href="{{ route('admin.documents.inbox') }}" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 {{ request()->routeIs('admin.documents.inbox') ? 'active' : '' }}">
-                        <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                        </svg>
-                        <span class="text-base">صندوق الوارد</span>
+                    <a href="{{ route('admin.documents.inbox') }}" class="sidebar-link flex items-center justify-between px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 {{ request()->routeIs('admin.documents.inbox') ? 'active' : '' }}">
+                        <div class="flex items-center gap-4">
+                            <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                            </svg>
+                            <span class="text-base">صندوق الوارد</span>
+                        </div>
+                        <span id="docsInboxBadge" class="hidden bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">0</span>
                     </a>
 
                     <a href="{{ route('admin.documents.my-documents') }}" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 {{ request()->routeIs('admin.documents.my-documents') ? 'active' : '' }}">
@@ -182,11 +185,14 @@
                     </a>
 
                     @if(in_array(auth()->user()->role, ['admin', 'supervisor']))
-                    <a href="{{ route('books.inbox') }}" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 {{ request()->routeIs('books.inbox') ? 'active' : '' }}">
-                        <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                        </svg>
-                        <span class="text-base">صندوق الوارد</span>
+                    <a href="{{ route('books.inbox') }}" class="sidebar-link flex items-center justify-between px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 {{ request()->routeIs('books.inbox') ? 'active' : '' }}">
+                        <div class="flex items-center gap-4">
+                            <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                            </svg>
+                            <span class="text-base">صندوق الوارد</span>
+                        </div>
+                        <span id="booksInboxBadge" class="hidden bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">0</span>
                     </a>
                     @endif
 
