@@ -58,64 +58,7 @@
             </form>
         </div>
 
-        <div class="mt-5 bg-white rounded-xl border border-slate-200 p-4">
-            <p class="text-center text-slate-500 text-sm mb-4 font-medium">حسابات تجريبية للدخول السريع</p>
-            <div class="grid grid-cols-1 gap-2">
-                <button onclick="fillLogin('admin', 'Admin123!')" class="flex items-center justify-between bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-3 rounded-lg transition cursor-pointer border border-slate-200">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 bg-sky-100 rounded-full flex items-center justify-center">
-                            <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-medium text-sm text-slate-700">مدير النظام</p>
-                            <p class="text-xs text-slate-400">admin / Admin123!</p>
-                        </div>
-                    </div>
-                    <span class="bg-sky-100 text-sky-600 text-xs px-2 py-1 rounded font-medium">مدير</span>
-                </button>
-
-                <button onclick="fillLogin('supervisor', '123456')" class="flex items-center justify-between bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-3 rounded-lg transition cursor-pointer border border-slate-200">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 bg-amber-100 rounded-full flex items-center justify-center">
-                            <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-medium text-sm text-slate-700">المشرف</p>
-                            <p class="text-xs text-slate-400">supervisor / 123456</p>
-                        </div>
-                    </div>
-                    <span class="bg-amber-100 text-amber-600 text-xs px-2 py-1 rounded font-medium">مشرف</span>
-                </button>
-
-                <button onclick="fillLogin('user1', '123456')" class="flex items-center justify-between bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-3 rounded-lg transition cursor-pointer border border-slate-200">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 bg-slate-200 rounded-full flex items-center justify-center">
-                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-medium text-sm text-slate-700">مستخدم عادي</p>
-                            <p class="text-xs text-slate-400">user1 / 123456</p>
-                        </div>
-                    </div>
-                    <span class="bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded font-medium">مستخدم</span>
-                </button>
-            </div>
-        </div>
-
         <p class="text-center text-slate-400 text-xs mt-5">جميع الحقوق محفوظة &copy; {{ date('Y') }}</p>
     </div>
-
-    <script>
-        function fillLogin(username, password) {
-            document.getElementById('username').value = username;
-            document.getElementById('password').value = password;
-        }
-    </script>
 </body>
 </html>
