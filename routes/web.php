@@ -12,6 +12,7 @@ use App\Http\Controllers\StationController;
 use App\Http\Controllers\PortController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\BookEntryController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\AttendanceController;
@@ -35,6 +36,11 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/counts', [NotificationController::class, 'counts'])->name('notifications.counts');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     
     Route::middleware('role:admin,supervisor')->group(function () {
         Route::resource('records', RecordController::class);
