@@ -44,7 +44,7 @@ class RecordController extends Controller
 
         $validated = $request->validate([
             'record_number' => 'required|string|unique:records',
-            'military_id' => 'required|string',
+            'military_id' => 'nullable|string',
             'first_name' => 'required|string|max:255',
             'second_name' => 'nullable|string|max:255',
             'third_name' => 'nullable|string|max:255',
@@ -94,7 +94,7 @@ class RecordController extends Controller
 
         $validated = $request->validate([
             'record_number' => 'required|string|unique:records,record_number,' . $record->id,
-            'military_id' => 'required|string',
+            'military_id' => 'nullable|string',
             'first_name' => 'required|string|max:255',
             'second_name' => 'nullable|string|max:255',
             'third_name' => 'nullable|string|max:255',

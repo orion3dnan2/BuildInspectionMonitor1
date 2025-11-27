@@ -92,10 +92,10 @@
             </div>
 
             <div class="mb-5">
-                <label class="block text-sm font-medium text-slate-600 mb-2 text-left">المحافظة <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-medium text-slate-600 mb-2 text-left">المحافظة</label>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <select name="governorate" id="governorate" required class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 bg-white text-sm">
+                        <select name="governorate" id="governorate" class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 bg-white text-sm">
                             <option value="">اختر المحافظة</option>
                             @foreach($governorates as $gov)
                                 <option value="{{ $gov }}" {{ old('governorate') == $gov ? 'selected' : '' }}>{{ $gov }}</option>
