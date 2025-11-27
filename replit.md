@@ -28,16 +28,6 @@ This system allows officers to record and manage inspection records with full CR
 - Home page with Block System and Administrative System tabs
 - Dark/Light mode toggle with localStorage persistence
 
-### Book Entry Module (دفتر القيد)
-- **Book Types**: Incoming, outgoing, internal, circular, decision
-- **Workflow**: Draft → Submitted → Approved/Rejected/Needs Modification
-- **Electronic Signatures**: Canvas-based digital signature capture
-- **Signature Verification**: SHA-256 hash for authenticity verification
-- **Manager Approval**: E-signature required for approval
-- **Rejection/Edit Requests**: Manager can reject or request modifications with reasons
-- **Authorization**: Owner-based access control with supervisor/admin override
-- **Print View**: Print-friendly layout with signature and verification code
-
 ### User Roles
 - **Admin (مدير)**: Full access to all features including user management and settings
 - **Supervisor (مشرف)**: All features except user management (can manage stations, ports, import data)
@@ -76,13 +66,19 @@ This system allows officers to record and manage inspection records with full CR
 ### Notification System (نظام الإشعارات)
 - **Real-time Notifications**: Bell icon in sidebar with unread count badge
 - **Notification Types**: 
-  - Book workflow: submitted, approved, rejected, needs_edit
   - Document workflow: submitted, sent_for_review, sent_to_manager, approved, rejected, needs_modification
 - **Inbox Badge Counts**: Dynamic counts on sidebar inbox links for pending items
 - **Notification Dropdown**: Click bell to see latest 5 notifications with timestamps
 - **Mark as Read**: Individual or bulk mark all as read
 - **Auto Refresh**: Counts refresh every 30 seconds via JavaScript polling
 - **Arabic Localization**: Full Arabic notification messages
+
+### Settings (الإعدادات)
+- **Global Access**: Settings section available across both Block System and Administrative System
+- **User Management**: Create, edit, delete users with role assignments
+- **Station Management**: Manage stations/police stations
+- **Port Management**: Manage entry ports
+- **Role & Permission Management**: Database-driven permissions with custom roles
 
 ### Permissions System (نظام الصلاحيات)
 - **Database-Driven**: All permissions stored in database for easy management
@@ -134,7 +130,6 @@ app/
 │   │   ├── UserController.php
 │   │   ├── StationController.php
 │   │   ├── PortController.php
-│   │   ├── BookEntryController.php
 │   │   ├── NotificationController.php
 │   │   ├── PermissionController.php
 │   │   └── Admin/
@@ -161,7 +156,6 @@ app/
 │   ├── LeaveRequest.php
 │   ├── Document.php
 │   ├── DocumentWorkflow.php
-│   ├── BookEntry.php
 │   ├── Signature.php
 │   ├── Notification.php
 │   ├── Permission.php
@@ -193,14 +187,6 @@ resources/views/
 │   └── print.blade.php
 ├── import/
 │   └── index.blade.php
-├── books/
-│   ├── index.blade.php
-│   ├── create.blade.php
-│   ├── show.blade.php
-│   ├── edit.blade.php
-│   ├── inbox.blade.php
-│   ├── my-books.blade.php
-│   └── print.blade.php
 ├── settings/
 │   ├── index.blade.php
 │   ├── users/
@@ -289,7 +275,6 @@ Using PostgreSQL (Neon) with the following tables:
 - `leave_requests` - Leave request workflow
 - `documents` - Document management with workflow states
 - `document_workflows` - Document workflow history and signatures
-- `book_entries` - Book entry management with approval workflow
 - `signatures` - Electronic signatures with hash verification
 - `notifications` - User notifications for workflow events
 - `correspondences` - Incoming and outgoing correspondence documents
