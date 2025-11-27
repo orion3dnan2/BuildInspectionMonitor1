@@ -10,11 +10,6 @@ use Illuminate\Http\Request;
 
 class RecordController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('role:admin,supervisor');
-    }
-
     public function index(Request $request)
     {
         $this->authorize('create', Record::class);
