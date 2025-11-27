@@ -162,6 +162,16 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
+                                @if($correspondence->file_path && ($correspondence->isPdf() || $correspondence->isImage()))
+                                <button type="button" 
+                                    onclick="openPreview('{{ asset('storage/' . $correspondence->file_path) }}', '{{ $correspondence->isPdf() ? 'pdf' : 'image' }}', '{{ $correspondence->title }}')" 
+                                    class="p-1.5 text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/30 rounded transition" 
+                                    title="معاينة سريعة">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                                    </svg>
+                                </button>
+                                @endif
                                 <a href="{{ route('admin.correspondences.show', $correspondence) }}" class="p-1.5 text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-900/30 rounded transition" title="عرض">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -213,4 +223,73 @@
         @endif
     </div>
 </div>
+
+<div id="previewModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closePreview()"></div>
+    <div class="absolute inset-4 md:inset-8 lg:inset-12 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+            <h3 id="previewTitle" class="text-lg font-bold text-slate-800 dark:text-white">معاينة الملف</h3>
+            <div class="flex items-center gap-2">
+                <a id="previewDownload" href="#" class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition flex items-center gap-2 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    تحميل
+                </a>
+                <button onclick="closePreview()" class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div id="previewContent" class="flex-1 overflow-auto p-4 bg-slate-100 dark:bg-slate-900">
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+function openPreview(url, type, title) {
+    const modal = document.getElementById('previewModal');
+    const content = document.getElementById('previewContent');
+    const titleEl = document.getElementById('previewTitle');
+    const downloadBtn = document.getElementById('previewDownload');
+    
+    titleEl.textContent = title || 'معاينة الملف';
+    downloadBtn.href = url;
+    downloadBtn.setAttribute('download', '');
+    
+    if (type === 'pdf') {
+        content.innerHTML = `
+            <iframe src="${url}#toolbar=1&navpanes=0" class="w-full h-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white" style="min-height: 100%;"></iframe>
+        `;
+    } else if (type === 'image') {
+        content.innerHTML = `
+            <div class="flex items-center justify-center h-full">
+                <img src="${url}" alt="${title}" class="max-w-full max-h-full object-contain rounded-lg shadow-lg">
+            </div>
+        `;
+    }
+    
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePreview() {
+    const modal = document.getElementById('previewModal');
+    const content = document.getElementById('previewContent');
+    
+    modal.classList.add('hidden');
+    content.innerHTML = '';
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePreview();
+    }
+});
+</script>
+@endpush
 @endsection
