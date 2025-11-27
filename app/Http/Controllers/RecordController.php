@@ -12,8 +12,6 @@ class RecordController extends Controller
 {
     public function index(Request $request)
     {
-        $this->authorize('create', Record::class);
-        
         $records = Record::with('creator')
             ->when($request->search, function ($query, $search) {
                 $query->search($search);
@@ -22,7 +20,12 @@ class RecordController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('records.index', compact('records'));
+        $stations = Station::orderBy('name')->get();
+        $ports = Port::orderBy('name')->get();
+        $governorates = $this->getGovernorates();
+        $ranks = $this->getRanks();
+
+        return view('records.index', compact('records', 'stations', 'ports', 'governorates', 'ranks'));
     }
 
     public function create()
