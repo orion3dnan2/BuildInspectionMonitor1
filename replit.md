@@ -84,6 +84,17 @@ This system allows officers to record and manage inspection records with full CR
 - **Auto Refresh**: Counts refresh every 30 seconds via JavaScript polling
 - **Arabic Localization**: Full Arabic notification messages
 
+### Permissions System (نظام الصلاحيات)
+- **Database-Driven**: All permissions stored in database for easy management
+- **Role Management**: Create/edit/delete custom roles with specific permissions
+- **Default Roles**: Admin (full access), Supervisor (limited admin), User (view only)
+- **Per-User Overrides**: Grant or deny specific permissions to individual users
+- **Module-Based Permissions**: Permissions organized by system module (records, books, documents, etc.)
+- **Action Types**: View, create, update, delete, approve, reject, import, export, print, manage
+- **Permission Sync**: Auto-sync permissions from system routes
+- **Permission Middleware**: Route-level access control via `permission:key` middleware
+- **UI Management**: Full admin interface for role and permission management in Settings
+
 ### UI Features
 - Modern, clean government-style admin panel
 - Full Arabic RTL support
@@ -113,6 +124,7 @@ app/
 │   │   ├── PortController.php
 │   │   ├── BookEntryController.php
 │   │   ├── NotificationController.php
+│   │   ├── PermissionController.php
 │   │   └── Admin/
 │   │       ├── DepartmentController.php
 │   │       ├── EmployeeController.php
@@ -121,7 +133,8 @@ app/
 │   │       └── DocumentController.php
 │   ├── Middleware/
 │   │   ├── AdminMiddleware.php
-│   │   └── RoleMiddleware.php
+│   │   ├── RoleMiddleware.php
+│   │   └── PermissionMiddleware.php
 │   └── Requests/
 ├── Models/
 │   ├── User.php
@@ -137,7 +150,9 @@ app/
 │   ├── DocumentWorkflow.php
 │   ├── BookEntry.php
 │   ├── Signature.php
-│   └── Notification.php
+│   ├── Notification.php
+│   ├── Permission.php
+│   └── Role.php
 ├── Policies/
 │   ├── RecordPolicy.php
 │   └── UserPolicy.php
