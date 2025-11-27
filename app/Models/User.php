@@ -19,6 +19,7 @@ class User extends Authenticatable
         'password',
         'role',
         'permissions',
+        'system_access',
         'rank',
         'office',
     ];
@@ -33,6 +34,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'permissions' => 'array',
+            'system_access' => 'array',
         ];
     }
 
@@ -136,5 +138,48 @@ class User extends Authenticatable
             'delete_records' => 'حذف السجلات',
             'import_data' => 'استيراد البيانات',
         ];
+    }
+
+    public static function availableSystems(): array
+    {
+        return [
+            'block_system' => 'نظام الحظر والتفتيش',
+            'admin_system' => 'النظام الإداري',
+        ];
+    }
+
+    public function hasSystemAccess(string $system): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+        
+        $systemAccess = $this->system_access ?? [];
+        return in_array($system, $systemAccess);
+    }
+
+    public function canAccessBlockSystem(): bool
+    {
+        return $this->hasSystemAccess('block_system');
+    }
+
+    public function canAccessAdminSystem(): bool
+    {
+        return $this->hasSystemAccess('admin_system');
+    }
+
+    public function getSystemAccessLabelsAttribute(): array
+    {
+        $systems = self::availableSystems();
+        $access = $this->system_access ?? [];
+        $labels = [];
+        
+        foreach ($access as $key) {
+            if (isset($systems[$key])) {
+                $labels[] = $systems[$key];
+            }
+        }
+        
+        return $labels;
     }
 }
