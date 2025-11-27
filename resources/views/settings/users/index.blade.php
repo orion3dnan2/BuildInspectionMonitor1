@@ -82,6 +82,7 @@
                         <th class="px-4 py-3 text-right font-medium text-slate-500">اسم المستخدم</th>
                         <th class="px-4 py-3 text-right font-medium text-slate-500">الاسم الكامل</th>
                         <th class="px-4 py-3 text-right font-medium text-slate-500">الصلاحية</th>
+                        <th class="px-4 py-3 text-right font-medium text-slate-500">الأنظمة المتاحة</th>
                         <th class="px-4 py-3 text-right font-medium text-slate-500">الإجراءات</th>
                     </tr>
                 </thead>
@@ -97,6 +98,19 @@
                                 @else bg-slate-100 text-slate-600 @endif">
                                 {{ $user->role_name }}
                             </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            @if($user->role == 'admin')
+                                <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-700">جميع الأنظمة</span>
+                            @else
+                                <div class="flex flex-wrap gap-1">
+                                    @forelse($user->system_access_labels as $label)
+                                        <span class="px-2 py-1 text-xs rounded bg-purple-100 text-purple-700">{{ $label }}</span>
+                                    @empty
+                                        <span class="text-xs text-slate-400">لا يوجد</span>
+                                    @endforelse
+                                </div>
+                            @endif
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex items-center gap-2">
@@ -123,7 +137,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="4" class="px-4 py-12 text-center text-slate-400">لا يوجد مستخدمين</td>
+                        <td colspan="5" class="px-4 py-12 text-center text-slate-400">لا يوجد مستخدمين</td>
                     </tr>
                     @endforelse
                 </tbody>
