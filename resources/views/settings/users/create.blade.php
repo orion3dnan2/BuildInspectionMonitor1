@@ -72,71 +72,37 @@
             </div>
 
             <div class="mb-6">
-                <label class="block text-sm text-slate-600 mb-3 text-right">الصلاحية <span class="text-red-500">*</span></label>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <label class="relative cursor-pointer">
-                        <input type="radio" name="role" value="admin" {{ old('role') == 'admin' ? 'checked' : '' }} class="peer sr-only" required>
-                        <div class="p-4 border-2 border-slate-200 rounded-lg peer-checked:border-sky-500 peer-checked:bg-sky-50 transition">
-                            <div class="flex items-center gap-3 mb-2">
-                                <div class="w-10 h-10 bg-sky-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                                    </svg>
-                                </div>
-                                <span class="font-bold text-slate-700">مدير</span>
-                            </div>
-                            <ul class="text-xs text-slate-500 space-y-1 mr-2">
-                                <li>جميع الصلاحيات</li>
-                                <li>إدارة المستخدمين</li>
-                                <li>إدارة الإعدادات</li>
-                                <li>إدخال وتعديل وحذف السجلات</li>
-                            </ul>
-                        </div>
+                <label class="block text-sm text-slate-600 mb-3 text-right">نوع الحساب <span class="text-red-500">*</span></label>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="role" value="admin" {{ old('role') == 'admin' ? 'checked' : '' }} 
+                            class="w-4 h-4 text-sky-500 border-slate-300 focus:ring-sky-400" id="role_admin">
+                        <span class="text-sm text-slate-700">مدير (جميع الصلاحيات)</span>
                     </label>
-
-                    <label class="relative cursor-pointer">
-                        <input type="radio" name="role" value="supervisor" {{ old('role') == 'supervisor' ? 'checked' : '' }} class="peer sr-only">
-                        <div class="p-4 border-2 border-slate-200 rounded-lg peer-checked:border-amber-500 peer-checked:bg-amber-50 transition">
-                            <div class="flex items-center gap-3 mb-2">
-                                <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                    </svg>
-                                </div>
-                                <span class="font-bold text-slate-700">مشرف</span>
-                            </div>
-                            <ul class="text-xs text-slate-500 space-y-1 mr-2">
-                                <li>إدارة الإعدادات</li>
-                                <li>إدخال وتعديل السجلات</li>
-                                <li>استيراد البيانات</li>
-                                <li>بدون إدارة المستخدمين</li>
-                            </ul>
-                        </div>
-                    </label>
-
-                    <label class="relative cursor-pointer">
-                        <input type="radio" name="role" value="user" {{ old('role', 'user') == 'user' ? 'checked' : '' }} class="peer sr-only">
-                        <div class="p-4 border-2 border-slate-200 rounded-lg peer-checked:border-slate-500 peer-checked:bg-slate-50 transition">
-                            <div class="flex items-center gap-3 mb-2">
-                                <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                    </svg>
-                                </div>
-                                <span class="font-bold text-slate-700">مستخدم</span>
-                            </div>
-                            <ul class="text-xs text-slate-500 space-y-1 mr-2">
-                                <li>عرض السجلات</li>
-                                <li>البحث والاستعلام</li>
-                                <li>عرض التقارير</li>
-                                <li>بدون تعديل أو حذف</li>
-                            </ul>
-                        </div>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="role" value="user" {{ old('role', 'user') == 'user' ? 'checked' : '' }} 
+                            class="w-4 h-4 text-sky-500 border-slate-300 focus:ring-sky-400" id="role_user">
+                        <span class="text-sm text-slate-700">مستخدم (صلاحيات مخصصة)</span>
                     </label>
                 </div>
                 @error('role')
                     <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
                 @enderror
+            </div>
+
+            <div class="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200" id="permissions_section">
+                <label class="block text-sm font-medium text-slate-700 mb-4">الصلاحيات المتاحة</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    @foreach(\App\Models\User::availablePermissions() as $key => $label)
+                    <label class="flex items-center gap-3 p-3 bg-white rounded border border-slate-200 cursor-pointer hover:border-sky-300 transition">
+                        <input type="checkbox" name="permissions[]" value="{{ $key }}" 
+                            {{ in_array($key, old('permissions', [])) ? 'checked' : '' }}
+                            class="w-4 h-4 text-sky-500 border-slate-300 rounded focus:ring-sky-400 permission-checkbox">
+                        <span class="text-sm text-slate-600">{{ $label }}</span>
+                    </label>
+                    @endforeach
+                </div>
+                <p class="text-xs text-slate-400 mt-3">اختر الصلاحيات التي تريد منحها لهذا المستخدم</p>
             </div>
 
             <div class="flex items-center gap-2">
@@ -150,4 +116,30 @@
         </form>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const adminRadio = document.getElementById('role_admin');
+    const userRadio = document.getElementById('role_user');
+    const permissionsSection = document.getElementById('permissions_section');
+    const checkboxes = document.querySelectorAll('.permission-checkbox');
+
+    function togglePermissions() {
+        if (adminRadio.checked) {
+            permissionsSection.style.opacity = '0.5';
+            permissionsSection.style.pointerEvents = 'none';
+            checkboxes.forEach(cb => cb.checked = true);
+        } else {
+            permissionsSection.style.opacity = '1';
+            permissionsSection.style.pointerEvents = 'auto';
+        }
+    }
+
+    adminRadio.addEventListener('change', togglePermissions);
+    userRadio.addEventListener('change', togglePermissions);
+    togglePermissions();
+});
+</script>
+@endpush
 @endsection

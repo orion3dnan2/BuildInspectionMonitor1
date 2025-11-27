@@ -18,6 +18,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'permissions',
         'rank',
         'office',
     ];
@@ -31,6 +32,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'permissions' => 'array',
         ];
     }
 
@@ -59,34 +61,59 @@ class User extends Authenticatable
         return $this->role === 'user';
     }
 
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+        
+        $permissions = $this->permissions ?? [];
+        return in_array($permission, $permissions);
+    }
+
     public function canManageUsers(): bool
     {
-        return $this->isAdmin();
+        return $this->isAdmin() || $this->hasPermission('manage_users');
     }
 
     public function canManageSettings(): bool
     {
-        return $this->isAdmin() || $this->isSupervisor();
+        return $this->isAdmin() || $this->hasPermission('manage_settings');
     }
 
     public function canCreateRecords(): bool
     {
-        return $this->isAdmin() || $this->isSupervisor();
+        return $this->isAdmin() || $this->hasPermission('create_records');
     }
 
     public function canEditRecords(): bool
     {
-        return $this->isAdmin() || $this->isSupervisor();
+        return $this->isAdmin() || $this->hasPermission('edit_records');
     }
 
     public function canDeleteRecords(): bool
     {
-        return $this->isAdmin() || $this->isSupervisor();
+        return $this->isAdmin() || $this->hasPermission('delete_records');
     }
 
     public function canImport(): bool
     {
-        return $this->isAdmin() || $this->isSupervisor();
+        return $this->isAdmin() || $this->hasPermission('import_data');
+    }
+
+    public function canViewRecords(): bool
+    {
+        return true;
+    }
+
+    public function canSearch(): bool
+    {
+        return true;
+    }
+
+    public function canViewReports(): bool
+    {
+        return true;
     }
 
     public function getRoleNameAttribute(): string
@@ -97,5 +124,17 @@ class User extends Authenticatable
             'user' => 'مستخدم',
             default => 'مستخدم'
         };
+    }
+
+    public static function availablePermissions(): array
+    {
+        return [
+            'manage_users' => 'إدارة المستخدمين',
+            'manage_settings' => 'إدارة الإعدادات (المخافر والمنافذ)',
+            'create_records' => 'إضافة سجلات جديدة',
+            'edit_records' => 'تعديل السجلات',
+            'delete_records' => 'حذف السجلات',
+            'import_data' => 'استيراد البيانات',
+        ];
     }
 }

@@ -44,10 +44,16 @@ class UserController extends Controller
             'username' => 'required|string|max:255|unique:users',
             'email' => 'nullable|email|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:admin,supervisor,user',
+            'role' => 'required|in:admin,user',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string|in:' . implode(',', array_keys(User::availablePermissions())),
             'rank' => 'nullable|string|max:255',
             'office' => 'nullable|string|max:255',
         ]);
+
+        $permissions = $validated['role'] === 'admin' 
+            ? array_keys(User::availablePermissions()) 
+            : ($validated['permissions'] ?? []);
 
         $user = User::create([
             'name' => $validated['name'],
@@ -55,6 +61,7 @@ class UserController extends Controller
             'email' => $validated['email'] ?? null,
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
+            'permissions' => $permissions,
             'rank' => $validated['rank'] ?? null,
             'office' => $validated['office'] ?? null,
         ]);
@@ -89,16 +96,23 @@ class UserController extends Controller
             'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'email' => ['nullable', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:6|confirmed',
-            'role' => 'required|in:admin,supervisor,user',
+            'role' => 'required|in:admin,user',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string|in:' . implode(',', array_keys(User::availablePermissions())),
             'rank' => 'nullable|string|max:255',
             'office' => 'nullable|string|max:255',
         ]);
+
+        $permissions = $validated['role'] === 'admin' 
+            ? array_keys(User::availablePermissions()) 
+            : ($validated['permissions'] ?? []);
 
         $data = [
             'name' => $validated['name'],
             'username' => $validated['username'],
             'email' => $validated['email'] ?? null,
             'role' => $validated['role'],
+            'permissions' => $permissions,
             'rank' => $validated['rank'] ?? null,
             'office' => $validated['office'] ?? null,
         ];
