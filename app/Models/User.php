@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -65,7 +66,7 @@ class User extends Authenticatable
 
     public function getPendingBooksCountAttribute(): int
     {
-        if (!in_array($this->role, ['admin', 'supervisor'])) {
+        if (!$this->can('books.approve')) {
             return 0;
         }
         return \App\Models\BookEntry::where('status', 'submitted')->count();
@@ -76,6 +77,19 @@ class User extends Authenticatable
         return \App\Models\Document::where('assigned_to', $this->id)
             ->whereIn('status', ['pending_review', 'pending_approval', 'needs_modification'])
             ->count();
+    }
+
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'user_roles')
+            ->withTimestamps();
+    }
+
+    public function userPermissions(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'user_permissions')
+            ->withPivot('granted')
+            ->withTimestamps();
     }
 
     public function isAdmin(): bool
@@ -93,14 +107,178 @@ class User extends Authenticatable
         return $this->role === 'user';
     }
 
+    public function hasRole(string $roleSlug): bool
+    {
+        return $this->roles()->where('slug', $roleSlug)->exists() || $this->role === $roleSlug;
+    }
+
+    public function hasAnyRole(array $roleSlugs): bool
+    {
+        foreach ($roleSlugs as $roleSlug) {
+            if ($this->hasRole($roleSlug)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function can($ability, $arguments = []): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        if (str_contains($ability, '.')) {
+            return $this->hasPermissionKey($ability);
+        }
+
+        return parent::can($ability, $arguments);
+    }
+
+    public function hasPermissionKey(string $permissionKey): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        $directPermission = $this->userPermissions()
+            ->where('key', $permissionKey)
+            ->wherePivot('granted', true)
+            ->exists();
+        
+        if ($directPermission) {
+            return true;
+        }
+
+        $deniedPermission = $this->userPermissions()
+            ->where('key', $permissionKey)
+            ->wherePivot('granted', false)
+            ->exists();
+        
+        if ($deniedPermission) {
+            return false;
+        }
+
+        foreach ($this->roles as $role) {
+            if ($role->hasPermission($permissionKey)) {
+                return true;
+            }
+        }
+
+        $legacyRole = Role::where('slug', $this->role)->first();
+        if ($legacyRole && $legacyRole->hasPermission($permissionKey)) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function hasPermission(string $permission): bool
     {
         if ($this->isAdmin()) {
             return true;
         }
+
+        if (str_contains($permission, '.')) {
+            return $this->hasPermissionKey($permission);
+        }
         
         $permissions = $this->permissions ?? [];
         return in_array($permission, $permissions);
+    }
+
+    public function getAllPermissions(): \Illuminate\Support\Collection
+    {
+        if ($this->isAdmin()) {
+            return Permission::all();
+        }
+
+        $rolePermissions = collect();
+        foreach ($this->roles as $role) {
+            $rolePermissions = $rolePermissions->merge($role->permissions);
+        }
+
+        $legacyRole = Role::where('slug', $this->role)->first();
+        if ($legacyRole) {
+            $rolePermissions = $rolePermissions->merge($legacyRole->permissions);
+        }
+
+        $directPermissions = $this->userPermissions()
+            ->wherePivot('granted', true)
+            ->get();
+
+        $deniedPermissions = $this->userPermissions()
+            ->wherePivot('granted', false)
+            ->pluck('id');
+
+        return $rolePermissions
+            ->merge($directPermissions)
+            ->unique('id')
+            ->reject(fn($p) => $deniedPermissions->contains($p->id));
+    }
+
+    public function givePermission(string|Permission $permission): void
+    {
+        if (is_string($permission)) {
+            $permission = Permission::where('key', $permission)->first();
+        }
+
+        if ($permission) {
+            $this->userPermissions()->syncWithoutDetaching([
+                $permission->id => ['granted' => true]
+            ]);
+        }
+    }
+
+    public function revokePermission(string|Permission $permission): void
+    {
+        if (is_string($permission)) {
+            $permission = Permission::where('key', $permission)->first();
+        }
+
+        if ($permission) {
+            $this->userPermissions()->detach($permission->id);
+        }
+    }
+
+    public function denyPermission(string|Permission $permission): void
+    {
+        if (is_string($permission)) {
+            $permission = Permission::where('key', $permission)->first();
+        }
+
+        if ($permission) {
+            $this->userPermissions()->syncWithoutDetaching([
+                $permission->id => ['granted' => false]
+            ]);
+        }
+    }
+
+    public function assignRole(string|Role $role): void
+    {
+        if (is_string($role)) {
+            $role = Role::where('slug', $role)->first();
+        }
+
+        if ($role) {
+            $this->roles()->syncWithoutDetaching([$role->id]);
+        }
+    }
+
+    public function removeRole(string|Role $role): void
+    {
+        if (is_string($role)) {
+            $role = Role::where('slug', $role)->first();
+        }
+
+        if ($role) {
+            $this->roles()->detach($role->id);
+        }
+    }
+
+    public function syncRoles(array $roleIds): void
+    {
+        $this->roles()->sync($roleIds);
     }
 
     public function canManageUsers(): bool
