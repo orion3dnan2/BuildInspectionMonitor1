@@ -6,17 +6,15 @@ use App\Models\User;
 use App\Models\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function __construct()
-    {
-        $this->authorizeResource(User::class, 'user');
-    }
-
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', User::class);
+        
         $users = User::query()
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
@@ -32,11 +30,15 @@ class UserController extends Controller
 
     public function create()
     {
+        Gate::authorize('create', User::class);
+        
         return view('settings.users.create');
     }
 
     public function store(Request $request)
     {
+        Gate::authorize('create', User::class);
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users',
@@ -66,16 +68,22 @@ class UserController extends Controller
 
     public function show(User $user)
     {
+        Gate::authorize('view', $user);
+        
         return view('settings.users.show', compact('user'));
     }
 
     public function edit(User $user)
     {
+        Gate::authorize('update', $user);
+        
         return view('settings.users.edit', compact('user'));
     }
 
     public function update(Request $request, User $user)
     {
+        Gate::authorize('update', $user);
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
@@ -110,6 +118,8 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        Gate::authorize('delete', $user);
+        
         if ($user->id === auth()->id()) {
             return back()->with('error', 'لا يمكنك حذف حسابك الخاص');
         }
