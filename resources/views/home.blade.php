@@ -3,6 +3,10 @@
 @section('title', 'الرئيسية - نظام الرقابة والتفتيش')
 
 @section('content')
+@php
+    $isAdminSection = request('section') === 'admin';
+@endphp
+
 <div class="text-center mb-10">
     <div class="w-20 h-20 bg-white border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm">
         <svg class="w-10 h-10 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -15,22 +19,22 @@
 
 <div class="flex justify-center mb-10">
     <div class="inline-flex bg-white rounded-xl border border-slate-200 p-1.5">
-        <button onclick="showTab('blocks')" id="tab-blocks" class="tab-btn flex items-center gap-3 px-8 py-3 rounded-lg font-medium transition bg-slate-100 text-slate-700">
+        <a href="{{ route('home') }}" class="flex items-center gap-3 px-8 py-3 rounded-lg font-medium transition {{ !$isAdminSection ? 'bg-slate-100 text-slate-700' : 'text-slate-400 hover:text-slate-600' }}">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
             </svg>
-            نظام البلوكات
-        </button>
-        <button onclick="showTab('admin')" id="tab-admin" class="tab-btn flex items-center gap-3 px-8 py-3 rounded-lg font-medium transition text-slate-400 hover:text-slate-600">
+            نظام الحجب
+        </a>
+        <a href="{{ route('home', ['section' => 'admin']) }}" class="flex items-center gap-3 px-8 py-3 rounded-lg font-medium transition {{ $isAdminSection ? 'bg-slate-100 text-slate-700' : 'text-slate-400 hover:text-slate-600' }}">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
             </svg>
-            نظام إداري
-        </button>
+            النظام الإداري
+        </a>
     </div>
 </div>
 
-<div id="content-blocks" class="tab-content">
+<div id="content-blocks" class="{{ $isAdminSection ? 'hidden' : '' }}">
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <a href="{{ route('dashboard') }}" class="block bg-white rounded-xl hover:shadow-lg transition p-8 text-center group border border-slate-200">
             <div class="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-5 group-hover:bg-sky-50 transition">
@@ -101,7 +105,7 @@
     </div>
 </div>
 
-<div id="content-admin" class="tab-content hidden">
+<div id="content-admin" class="{{ !$isAdminSection ? 'hidden' : '' }}">
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         @if(auth()->user()->canManageSettings())
         <a href="{{ route('admin.employees.index') }}" class="block bg-white rounded-xl hover:shadow-lg transition p-8 text-center group border border-slate-200">
@@ -182,19 +186,4 @@
     <span>جميع الحقوق محفوظة &copy; {{ date('Y') }}</span>
 </footer>
 
-@push('scripts')
-<script>
-function showTab(tab) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    document.querySelectorAll('.tab-btn').forEach(el => {
-        el.classList.remove('bg-slate-100', 'text-slate-700');
-        el.classList.add('text-slate-400');
-    });
-    
-    document.getElementById('content-' + tab).classList.remove('hidden');
-    document.getElementById('tab-' + tab).classList.add('bg-slate-100', 'text-slate-700');
-    document.getElementById('tab-' + tab).classList.remove('text-slate-400');
-}
-</script>
-@endpush
 @endsection
