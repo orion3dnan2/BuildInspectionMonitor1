@@ -34,14 +34,14 @@ class User extends Authenticatable
         ];
     }
 
-    public function reports(): HasMany
+    public function records(): HasMany
     {
-        return $this->hasMany(InspectionReport::class, 'created_by');
+        return $this->hasMany(Record::class, 'created_by');
     }
 
-    public function activityLogs(): HasMany
+    public function logs(): HasMany
     {
-        return $this->hasMany(ActivityLog::class);
+        return $this->hasMany(Log::class);
     }
 
     public function isAdmin(): bool
@@ -49,8 +49,53 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
-    public function isInspector(): bool
+    public function isSupervisor(): bool
     {
-        return $this->role === 'inspector';
+        return $this->role === 'supervisor';
+    }
+
+    public function isUser(): bool
+    {
+        return $this->role === 'user';
+    }
+
+    public function canManageUsers(): bool
+    {
+        return $this->isAdmin();
+    }
+
+    public function canManageSettings(): bool
+    {
+        return $this->isAdmin() || $this->isSupervisor();
+    }
+
+    public function canCreateRecords(): bool
+    {
+        return $this->isAdmin() || $this->isSupervisor();
+    }
+
+    public function canEditRecords(): bool
+    {
+        return $this->isAdmin() || $this->isSupervisor();
+    }
+
+    public function canDeleteRecords(): bool
+    {
+        return $this->isAdmin() || $this->isSupervisor();
+    }
+
+    public function canImport(): bool
+    {
+        return $this->isAdmin() || $this->isSupervisor();
+    }
+
+    public function getRoleNameAttribute(): string
+    {
+        return match($this->role) {
+            'admin' => 'مدير',
+            'supervisor' => 'مشرف',
+            'user' => 'مستخدم',
+            default => 'مستخدم'
+        };
     }
 }

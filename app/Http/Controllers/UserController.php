@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\ActivityLog;
-use App\Http\Requests\StoreUserRequest;
-use App\Http\Requests\UpdateUserRequest;
+use App\Models\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -28,99 +27,98 @@ class UserController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('users.index', compact('users'));
+        return view('settings.users.index', compact('users'));
     }
 
     public function create()
     {
-        return view('users.create');
+        return view('settings.users.create');
     }
 
-    public function store(StoreUserRequest $request)
+    public function store(Request $request)
     {
-        $user = User::create([
-            'name' => $request->name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-            'rank' => $request->rank,
-            'office' => $request->office,
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users',
+            'email' => 'nullable|email|unique:users',
+            'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|in:admin,supervisor,user',
+            'rank' => 'nullable|string|max:255',
+            'office' => 'nullable|string|max:255',
         ]);
 
-        ActivityLog::log(
-            'create',
-            'User',
-            $user->id,
-            'إنشاء مستخدم جديد: ' . $user->name,
-            null,
-            $user->makeHidden(['password', 'remember_token'])->toArray()
-        );
+        $user = User::create([
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+            'email' => $validated['email'] ?? null,
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
+            'rank' => $validated['rank'] ?? null,
+            'office' => $validated['office'] ?? null,
+        ]);
+
+        Log::record('create_user', 'إنشاء مستخدم جديد: ' . $user->name);
 
         return redirect()
-            ->route('users.index')
+            ->route('settings.users.index')
             ->with('success', 'تم إنشاء المستخدم بنجاح');
     }
 
     public function show(User $user)
     {
-        $user->load('reports');
-        return view('users.show', compact('user'));
+        return view('settings.users.show', compact('user'));
     }
 
     public function edit(User $user)
     {
-        return view('users.edit', compact('user'));
+        return view('settings.users.edit', compact('user'));
     }
 
-    public function update(UpdateUserRequest $request, User $user)
+    public function update(Request $request, User $user)
     {
-        $oldValues = $user->makeHidden(['password', 'remember_token'])->toArray();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => ['nullable', 'email', Rule::unique('users')->ignore($user->id)],
+            'password' => 'nullable|string|min:6|confirmed',
+            'role' => 'required|in:admin,supervisor,user',
+            'rank' => 'nullable|string|max:255',
+            'office' => 'nullable|string|max:255',
+        ]);
 
         $data = [
-            'name' => $request->name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'role' => $request->role,
-            'rank' => $request->rank,
-            'office' => $request->office,
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+            'email' => $validated['email'] ?? null,
+            'role' => $validated['role'],
+            'rank' => $validated['rank'] ?? null,
+            'office' => $validated['office'] ?? null,
         ];
 
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
+        if (!empty($validated['password'])) {
+            $data['password'] = Hash::make($validated['password']);
         }
 
         $user->update($data);
 
-        ActivityLog::log(
-            'update',
-            'User',
-            $user->id,
-            'تعديل مستخدم: ' . $user->name,
-            $oldValues,
-            $user->fresh()->makeHidden(['password', 'remember_token'])->toArray()
-        );
+        Log::record('update_user', 'تعديل مستخدم: ' . $user->name);
 
         return redirect()
-            ->route('users.index')
+            ->route('settings.users.index')
             ->with('success', 'تم تحديث المستخدم بنجاح');
     }
 
     public function destroy(User $user)
     {
-        ActivityLog::log(
-            'delete',
-            'User',
-            $user->id,
-            'حذف مستخدم: ' . $user->name,
-            $user->makeHidden(['password', 'remember_token'])->toArray(),
-            null
-        );
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'لا يمكنك حذف حسابك الخاص');
+        }
 
+        Log::record('delete_user', 'حذف مستخدم: ' . $user->name);
         $user->delete();
 
         return redirect()
-            ->route('users.index')
+            ->route('settings.users.index')
             ->with('success', 'تم حذف المستخدم بنجاح');
     }
 }

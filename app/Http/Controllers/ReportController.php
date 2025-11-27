@@ -2,109 +2,147 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\InspectionReport;
-use App\Models\ActivityLog;
-use App\Http\Requests\StoreReportRequest;
-use App\Http\Requests\UpdateReportRequest;
+use App\Models\Record;
+use App\Models\Station;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class ReportController extends Controller
 {
     public function index(Request $request)
     {
-        $reports = InspectionReport::with('creator')
-            ->search($request->search)
-            ->filterByDate($request->date)
-            ->filterByOffice($request->office)
-            ->latest()
-            ->paginate(15)
+        $stats = $this->getStatistics();
+        
+        $records = Record::query()
+            ->when($request->period, function ($query, $period) use ($request) {
+                switch ($period) {
+                    case 'today':
+                        $query->whereDate('round_date', today());
+                        break;
+                    case 'month':
+                        $query->whereMonth('round_date', Carbon::now()->month)
+                              ->whereYear('round_date', Carbon::now()->year);
+                        break;
+                    case 'year':
+                        $query->whereYear('round_date', Carbon::now()->year);
+                        break;
+                    case 'custom':
+                        if ($request->date_from && $request->date_to) {
+                            $query->whereBetween('round_date', [$request->date_from, $request->date_to]);
+                        }
+                        break;
+                }
+            })
+            ->when($request->governorate, function ($query, $value) {
+                $query->where('governorate', $value);
+            })
+            ->when($request->station, function ($query, $value) {
+                $query->where('station', $value);
+            })
+            ->when($request->rank, function ($query, $value) {
+                $query->where('rank', $value);
+            })
+            ->when($request->action_type, function ($query, $value) {
+                $query->where('action_type', $value);
+            })
+            ->when($request->name, function ($query, $value) {
+                $query->where(function ($q) use ($value) {
+                    $q->where('first_name', 'like', "%{$value}%")
+                      ->orWhere('second_name', 'like', "%{$value}%")
+                      ->orWhere('third_name', 'like', "%{$value}%")
+                      ->orWhere('fourth_name', 'like', "%{$value}%");
+                });
+            })
+            ->latest('round_date')
+            ->paginate(20)
             ->withQueryString();
 
-        return view('reports.index', compact('reports'));
+        $stations = Station::orderBy('name')->get();
+        $governorates = $this->getGovernorates();
+        $ranks = $this->getRanks();
+        $actionTypes = $this->getActionTypes();
+
+        return view('reports.index', compact('stats', 'records', 'stations', 'governorates', 'ranks', 'actionTypes'));
     }
 
-    public function create()
+    public function print(Request $request)
     {
-        return view('reports.create');
+        $records = Record::query()
+            ->when($request->period, function ($query, $period) use ($request) {
+                switch ($period) {
+                    case 'today':
+                        $query->whereDate('round_date', today());
+                        break;
+                    case 'month':
+                        $query->whereMonth('round_date', Carbon::now()->month)
+                              ->whereYear('round_date', Carbon::now()->year);
+                        break;
+                    case 'year':
+                        $query->whereYear('round_date', Carbon::now()->year);
+                        break;
+                    case 'custom':
+                        if ($request->date_from && $request->date_to) {
+                            $query->whereBetween('round_date', [$request->date_from, $request->date_to]);
+                        }
+                        break;
+                }
+            })
+            ->when($request->governorate, function ($query, $value) {
+                $query->where('governorate', $value);
+            })
+            ->when($request->station, function ($query, $value) {
+                $query->where('station', $value);
+            })
+            ->when($request->rank, function ($query, $value) {
+                $query->where('rank', $value);
+            })
+            ->when($request->action_type, function ($query, $value) {
+                $query->where('action_type', $value);
+            })
+            ->when($request->name, function ($query, $value) {
+                $query->where(function ($q) use ($value) {
+                    $q->where('first_name', 'like', "%{$value}%")
+                      ->orWhere('second_name', 'like', "%{$value}%")
+                      ->orWhere('third_name', 'like', "%{$value}%")
+                      ->orWhere('fourth_name', 'like', "%{$value}%");
+                });
+            })
+            ->latest('round_date')
+            ->get();
+
+        return view('reports.print', compact('records'));
     }
 
-    public function store(StoreReportRequest $request)
+    private function getStatistics(): array
     {
-        $report = InspectionReport::create([
-            ...$request->validated(),
-            'created_by' => auth()->id(),
-        ]);
-
-        ActivityLog::log(
-            'create',
-            'InspectionReport',
-            $report->id,
-            'إنشاء تقرير تفتيش جديد: ' . $report->record_number,
-            null,
-            $report->toArray()
-        );
-
-        return redirect()
-            ->route('reports.index')
-            ->with('success', 'تم إنشاء التقرير بنجاح');
+        return [
+            'total' => Record::count(),
+            'today' => Record::whereDate('round_date', today())->count(),
+            'month' => Record::whereMonth('round_date', Carbon::now()->month)
+                             ->whereYear('round_date', Carbon::now()->year)
+                             ->count(),
+            'year' => Record::whereYear('round_date', Carbon::now()->year)->count(),
+        ];
     }
 
-    public function show(InspectionReport $report)
+    private function getGovernorates(): array
     {
-        $report->load('creator');
-        return view('reports.show', compact('report'));
+        return [
+            'العاصمة', 'حولي', 'الفروانية', 'الجهراء', 'الأحمدي', 'مبارك الكبير'
+        ];
     }
 
-    public function edit(InspectionReport $report)
+    private function getRanks(): array
     {
-        $this->authorize('update', $report);
-        return view('reports.edit', compact('report'));
+        return [
+            'ملازم', 'ملازم أول', 'نقيب', 'رائد', 'مقدم', 'عقيد', 'عميد', 'لواء'
+        ];
     }
 
-    public function update(UpdateReportRequest $request, InspectionReport $report)
+    private function getActionTypes(): array
     {
-        $this->authorize('update', $report);
-
-        $oldValues = $report->toArray();
-        $report->update($request->validated());
-
-        ActivityLog::log(
-            'update',
-            'InspectionReport',
-            $report->id,
-            'تعديل تقرير تفتيش: ' . $report->record_number,
-            $oldValues,
-            $report->fresh()->toArray()
-        );
-
-        return redirect()
-            ->route('reports.index')
-            ->with('success', 'تم تحديث التقرير بنجاح');
-    }
-
-    public function destroy(InspectionReport $report)
-    {
-        $this->authorize('delete', $report);
-
-        ActivityLog::log(
-            'delete',
-            'InspectionReport',
-            $report->id,
-            'حذف تقرير تفتيش: ' . $report->record_number,
-            $report->toArray(),
-            null
-        );
-
-        $report->delete();
-
-        return redirect()
-            ->route('reports.index')
-            ->with('success', 'تم حذف التقرير بنجاح');
-    }
-
-    public function print(InspectionReport $report)
-    {
-        $report->load('creator');
-        return view('reports.print', compact('report'));
+        return [
+            'تفتيش', 'رقابة', 'متابعة', 'زيارة ميدانية', 'تحقيق', 'أخرى'
+        ];
     }
 }

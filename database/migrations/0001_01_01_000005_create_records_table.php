@@ -8,15 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('inspection_reports', function (Blueprint $table) {
+        Schema::create('records', function (Blueprint $table) {
             $table->id();
             $table->string('record_number')->unique();
-            $table->string('outgoing_number')->nullable();
-            $table->string('officer_name');
+            $table->string('military_id');
+            $table->string('first_name');
+            $table->string('second_name')->nullable();
+            $table->string('third_name')->nullable();
+            $table->string('fourth_name')->nullable();
             $table->string('rank')->nullable();
-            $table->string('office_name');
-            $table->date('inspection_date');
+            $table->string('governorate')->nullable();
+            $table->string('station')->nullable();
+            $table->string('action_type')->nullable();
+            $table->string('ports')->nullable();
             $table->text('notes')->nullable();
+            $table->date('round_date');
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
@@ -25,6 +31,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('inspection_reports');
+        Schema::dropIfExists('records');
     }
 };

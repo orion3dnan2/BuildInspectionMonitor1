@@ -1,10 +1,16 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RecordController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\StationController;
+use App\Http\Controllers\PortController;
+use App\Http\Controllers\ImportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -14,17 +20,55 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
+    Route::get('/register', [LoginController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [LoginController::class, 'register']);
 });
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+    
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
-    Route::resource('reports', ReportController::class);
-    Route::get('/reports/{report}/print', [ReportController::class, 'print'])->name('reports.print');
+    Route::middleware('role:admin,supervisor')->group(function () {
+        Route::resource('records', RecordController::class);
+    });
+    
+    Route::get('/search', [SearchController::class, 'index'])->name('search.index');
+    Route::get('/search/{record}', [SearchController::class, 'show'])->name('search.show');
+    
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/print', [ReportController::class, 'print'])->name('reports.print');
+    
+    Route::middleware('role:admin,supervisor')->group(function () {
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        
+        Route::get('/settings/stations', [StationController::class, 'index'])->name('settings.stations.index');
+        Route::get('/settings/stations/create', [StationController::class, 'create'])->name('settings.stations.create');
+        Route::post('/settings/stations', [StationController::class, 'store'])->name('settings.stations.store');
+        Route::get('/settings/stations/{station}/edit', [StationController::class, 'edit'])->name('settings.stations.edit');
+        Route::put('/settings/stations/{station}', [StationController::class, 'update'])->name('settings.stations.update');
+        Route::delete('/settings/stations/{station}', [StationController::class, 'destroy'])->name('settings.stations.destroy');
+        
+        Route::get('/settings/ports', [PortController::class, 'index'])->name('settings.ports.index');
+        Route::get('/settings/ports/create', [PortController::class, 'create'])->name('settings.ports.create');
+        Route::post('/settings/ports', [PortController::class, 'store'])->name('settings.ports.store');
+        Route::get('/settings/ports/{port}/edit', [PortController::class, 'edit'])->name('settings.ports.edit');
+        Route::put('/settings/ports/{port}', [PortController::class, 'update'])->name('settings.ports.update');
+        Route::delete('/settings/ports/{port}', [PortController::class, 'destroy'])->name('settings.ports.destroy');
+        
+        Route::get('/import', [ImportController::class, 'index'])->name('import.index');
+        Route::post('/import', [ImportController::class, 'store'])->name('import.store');
+        Route::get('/import/template', [ImportController::class, 'template'])->name('import.template');
+    });
     
     Route::middleware('admin')->group(function () {
-        Route::resource('users', UserController::class);
-        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('/settings/users', [UserController::class, 'index'])->name('settings.users.index');
+        Route::get('/settings/users/create', [UserController::class, 'create'])->name('settings.users.create');
+        Route::post('/settings/users', [UserController::class, 'store'])->name('settings.users.store');
+        Route::get('/settings/users/{user}', [UserController::class, 'show'])->name('settings.users.show');
+        Route::get('/settings/users/{user}/edit', [UserController::class, 'edit'])->name('settings.users.edit');
+        Route::put('/settings/users/{user}', [UserController::class, 'update'])->name('settings.users.update');
+        Route::delete('/settings/users/{user}', [UserController::class, 'destroy'])->name('settings.users.destroy');
     });
 });

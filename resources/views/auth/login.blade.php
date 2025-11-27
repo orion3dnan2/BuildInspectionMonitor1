@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الدخول - نظام التفتيش والمراقبة</title>
+    <title>تسجيل الدخول - نظام الرقابة والتفتيش</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -19,7 +19,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                     </svg>
                 </div>
-                <h1 class="text-2xl font-bold text-gray-800">نظام التفتيش والمراقبة</h1>
+                <h1 class="text-2xl font-bold text-gray-800">نظام إدارة الرقابة والتفتيش</h1>
                 <p class="text-gray-500 mt-2">قم بتسجيل الدخول للمتابعة</p>
             </div>
 
@@ -56,28 +56,46 @@
                     تسجيل الدخول
                 </button>
             </form>
+
+            <div class="mt-6 text-center">
+                <a href="{{ route('register') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">ليس لديك حساب؟ سجل الآن</a>
+            </div>
         </div>
 
-        <!-- Quick Login Cards -->
         <div class="mt-6 bg-white/10 backdrop-blur-sm rounded-xl p-4">
             <p class="text-center text-white text-sm mb-4 font-medium">حسابات تجريبية للدخول السريع</p>
             <div class="grid grid-cols-1 gap-3">
-                <button onclick="fillLogin('admin', '123456')" class="flex items-center justify-between bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-lg transition cursor-pointer">
+                <button onclick="fillLogin('admin', 'Admin123!')" class="flex items-center justify-between bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-lg transition cursor-pointer">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
+                        <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                             </svg>
                         </div>
                         <div class="text-right">
                             <p class="font-medium">مدير النظام</p>
-                            <p class="text-xs text-blue-200">admin / 123456</p>
+                            <p class="text-xs text-blue-200">admin / Admin123!</p>
                         </div>
                     </div>
-                    <span class="bg-yellow-500 text-xs px-2 py-1 rounded">مدير</span>
+                    <span class="bg-red-500 text-xs px-2 py-1 rounded">مدير</span>
                 </button>
 
-                <button onclick="fillLogin('inspector1', '123456')" class="flex items-center justify-between bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-lg transition cursor-pointer">
+                <button onclick="fillLogin('supervisor', '123456')" class="flex items-center justify-between bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-lg transition cursor-pointer">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium">المشرف</p>
+                            <p class="text-xs text-blue-200">supervisor / 123456</p>
+                        </div>
+                    </div>
+                    <span class="bg-yellow-500 text-xs px-2 py-1 rounded">مشرف</span>
+                </button>
+
+                <button onclick="fillLogin('user1', '123456')" class="flex items-center justify-between bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-lg transition cursor-pointer">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,26 +103,11 @@
                             </svg>
                         </div>
                         <div class="text-right">
-                            <p class="font-medium">محمد أحمد</p>
-                            <p class="text-xs text-blue-200">inspector1 / 123456</p>
+                            <p class="font-medium">مستخدم عادي</p>
+                            <p class="text-xs text-blue-200">user1 / 123456</p>
                         </div>
                     </div>
-                    <span class="bg-blue-500 text-xs px-2 py-1 rounded">مفتش</span>
-                </button>
-
-                <button onclick="fillLogin('inspector2', '123456')" class="flex items-center justify-between bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-lg transition cursor-pointer">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-medium">علي محمود</p>
-                            <p class="text-xs text-blue-200">inspector2 / 123456</p>
-                        </div>
-                    </div>
-                    <span class="bg-green-500 text-xs px-2 py-1 rounded">مفتش</span>
+                    <span class="bg-blue-500 text-xs px-2 py-1 rounded">مستخدم</span>
                 </button>
             </div>
         </div>

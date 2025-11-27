@@ -1,10 +1,10 @@
-# Inspection & Monitoring System (نظام التفتيش والمراقبة)
+# Records Management System (نظام إدارة الرقابة والتفتيش)
 
-A complete Laravel-based Inspection & Monitoring System for field-inspection teams.
+A complete Laravel-based Records Management System for inspection and monitoring teams.
 
 ## Overview
 
-This system allows officers to record daily inspection reports for multiple offices with full CRUD operations, role-based access control, and a modern Arabic RTL user interface.
+This system allows officers to record and manage inspection records with full CRUD operations, three-tier role-based access control, advanced search, and a modern Arabic RTL user interface.
 
 ## Stack
 
@@ -13,20 +13,36 @@ This system allows officers to record daily inspection reports for multiple offi
 - **Frontend**: Blade templates with TailwindCSS
 - **Authentication**: Laravel session-based auth + Sanctum for API
 - **Session Driver**: File-based sessions
+- **Excel Import**: PhpSpreadsheet library
 
 ## Features
 
 ### Core Features
-- User authentication with role-based access (Admin/Inspector)
-- Full CRUD for Inspection Reports
-- Search and filter reports by record number, officer, office, and date
-- Dashboard with statistics (total reports, today's reports, total inspectors)
-- Activity logging for all create/update/delete operations
+- Three-tier role-based access control (Admin/Supervisor/User)
+- Full CRUD for inspection records
+- Advanced search with multiple filters (name, military ID, governorate, rank, station, date range)
+- Dashboard with statistics (total, today, month, year records)
+- Activity logging for all operations
+- Excel import functionality
 - Print-friendly report pages
+- Home page with Block System and Administrative System tabs
 
 ### User Roles
-- **Admin**: Full access to all features including user management and activity logs
-- **Inspector**: Can create and view reports, edit own reports
+- **Admin (مدير)**: Full access to all features including user management and settings
+- **Supervisor (مشرف)**: All features except user management (can manage stations, ports, import data)
+- **User (مستخدم)**: View, search, and generate reports only
+
+### Record Fields
+- Record Number (رقم الصادر)
+- Military ID (الرقم العسكري)
+- 4-part Arabic Name (الاسم الرباعي)
+- Rank (الرتبة)
+- Governorate (المحافظة)
+- Station (المخفر)
+- Action Type (نوع الإجراء)
+- Ports (المنافذ)
+- Notes (ملاحظات)
+- Round Date (تاريخ الجولة)
 
 ### UI Features
 - Modern, clean government-style admin panel
@@ -35,6 +51,7 @@ This system allows officers to record daily inspection reports for multiple offi
 - Professional forms with validation messages
 - Data tables with pagination and search
 - Quick login cards on login page for testing
+- Tabbed home page (Block System / Administrative System)
 
 ## Project Structure
 
@@ -42,60 +59,77 @@ This system allows officers to record daily inspection reports for multiple offi
 app/
 ├── Http/
 │   ├── Controllers/
-│   │   ├── Api/              # API controllers
-│   │   ├── Auth/             # Authentication controllers
+│   │   ├── Auth/LoginController.php
+│   │   ├── HomeController.php
 │   │   ├── DashboardController.php
+│   │   ├── RecordController.php
+│   │   ├── SearchController.php
 │   │   ├── ReportController.php
+│   │   ├── ImportController.php
+│   │   ├── SettingController.php
 │   │   ├── UserController.php
-│   │   └── ActivityLogController.php
+│   │   ├── StationController.php
+│   │   └── PortController.php
 │   ├── Middleware/
-│   │   └── AdminMiddleware.php
-│   └── Requests/             # Form request validation
+│   │   ├── AdminMiddleware.php
+│   │   └── RoleMiddleware.php
+│   └── Requests/
 ├── Models/
 │   ├── User.php
-│   ├── InspectionReport.php
-│   └── ActivityLog.php
+│   ├── Record.php
+│   ├── Station.php
+│   ├── Port.php
+│   └── Log.php
 ├── Policies/
-│   ├── ReportPolicy.php
+│   ├── RecordPolicy.php
 │   └── UserPolicy.php
 └── Providers/
     └── AppServiceProvider.php
 
 resources/views/
-├── layouts/app.blade.php     # Main layout with sidebar
-├── auth/login.blade.php      # Login page
-├── dashboard.blade.php       # Dashboard
-├── reports/                  # Report views
-├── users/                    # User management views
-└── activity-logs/            # Activity log views
+├── layouts/app.blade.php
+├── auth/
+│   ├── login.blade.php
+│   └── register.blade.php
+├── home.blade.php
+├── dashboard.blade.php
+├── records/
+│   ├── index.blade.php
+│   ├── create.blade.php
+│   ├── show.blade.php
+│   └── edit.blade.php
+├── search/
+│   ├── index.blade.php
+│   └── show.blade.php
+├── reports/
+│   ├── index.blade.php
+│   └── print.blade.php
+├── import/
+│   └── index.blade.php
+└── settings/
+    ├── index.blade.php
+    ├── users/
+    ├── stations/
+    └── ports/
 
 routes/
-├── web.php                   # Web routes
-└── api.php                   # API routes
+├── web.php
+└── api.php
 ```
 
-## API Endpoints
-
-### Authentication
-- `POST /api/login` - Login and get API token
-- `POST /api/logout` - Logout (requires auth)
-
-### Reports (requires authentication)
-- `GET /api/reports` - List all reports
-- `POST /api/reports` - Create new report
-- `GET /api/reports/{id}` - Get single report
-- `PUT /api/reports/{id}` - Update report
-- `DELETE /api/reports/{id}` - Delete report (admin only)
-
-## Test Credentials (Simple for Testing)
+## Test Credentials
 
 - **Admin Account**:
   - Username: `admin`
+  - Password: `Admin123!`
+
+- **Supervisor Account**:
+  - Username: `supervisor`
   - Password: `123456`
 
-- **Inspector Accounts**:
-  - Username: `inspector1` / Password: `123456`
-  - Username: `inspector2` / Password: `123456`
+- **User Account**:
+  - Username: `user1`
+  - Password: `123456`
 
 ## Running the Application
 
@@ -109,9 +143,11 @@ php artisan serve --host=0.0.0.0 --port=5000 --no-reload
 ## Database
 
 Using PostgreSQL (Neon) with the following tables:
-- `users` - System users with roles
-- `inspection_reports` - Inspection report records (soft deletes enabled)
-- `activity_logs` - Activity tracking
+- `users` - System users with roles (admin, supervisor, user)
+- `records` - Inspection records with soft deletes
+- `stations` - Station/Police station management
+- `ports` - Ports/Entry points management
+- `logs` - Activity tracking
 - `sessions` - Session management
 - `cache` - Application cache
 - `jobs` - Queue jobs
@@ -126,12 +162,13 @@ The `bootstrap/app.php` file ensures these environment variables are loaded into
 
 ## Development Notes
 
-- Form validation uses Laravel FormRequest classes
-- Policies control authorization for reports and users
+- Policies control authorization for records and users
 - Activity logging tracks all CRUD operations
-- Soft deletes enabled for inspection reports
+- Soft deletes enabled for records
 - Session driver set to `file` for simplicity
 - Quick login cards on login page show credentials for easy testing
+- Excel import uses PhpSpreadsheet library
+- Three middleware for role control: `admin`, `role:admin,supervisor`
 
 ## Technical Notes
 
@@ -140,3 +177,9 @@ Laravel's `ServeCommand` filters environment variables when spawning child proce
 
 ### Session Configuration
 Sessions are stored in files (`storage/framework/sessions/`) rather than the database to avoid potential connection issues during development.
+
+### Role-Based Access Control
+The system uses a combination of middleware and policies:
+- `AdminMiddleware`: Restricts access to admin-only routes
+- `RoleMiddleware`: Allows multiple roles (e.g., `role:admin,supervisor`)
+- `RecordPolicy` and `UserPolicy`: Fine-grained authorization checks
