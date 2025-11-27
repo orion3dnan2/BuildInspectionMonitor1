@@ -3,55 +3,56 @@
 @section('title', 'الإعدادات - نظام الرقابة والتفتيش')
 
 @section('content')
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">الإعدادات</h1>
-    <p class="text-gray-600">إدارة إعدادات النظام</p>
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    @if(auth()->user()->isAdmin())
-    <a href="{{ route('settings.users.index') }}" class="block bg-white rounded-xl shadow-sm hover:shadow-md transition p-6 border-r-4 border-blue-500">
-        <div class="flex items-center gap-4">
-            <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center">
-                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+<div class="max-w-5xl mx-auto">
+    <div class="mb-6">
+        <a href="{{ route('home') }}" class="inline-flex items-center text-gray-600 hover:text-gray-800 text-sm mb-4 bg-white px-3 py-1.5 rounded-lg border border-gray-200">
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+            العودة الرئيسية
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
             </div>
             <div>
-                <h3 class="text-xl font-bold text-gray-800">إدارة المستخدمين</h3>
-                <p class="text-gray-500">إضافة وتعديل المستخدمين</p>
+                <h1 class="text-2xl font-bold text-gray-800">الإعدادات</h1>
+                <p class="text-gray-500 text-sm">إدارة إعدادات النظام والبيانات الأساسية</p>
             </div>
         </div>
-    </a>
-    @endif
+    </div>
 
-    <a href="{{ route('settings.stations.index') }}" class="block bg-white rounded-xl shadow-sm hover:shadow-md transition p-6 border-r-4 border-green-500">
-        <div class="flex items-center gap-4">
-            <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center">
-                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                </svg>
-            </div>
-            <div>
-                <h3 class="text-xl font-bold text-gray-800">إدارة المخافر</h3>
-                <p class="text-gray-500">إضافة وتعديل المخافر</p>
-            </div>
-        </div>
-    </a>
-
-    <a href="{{ route('settings.ports.index') }}" class="block bg-white rounded-xl shadow-sm hover:shadow-md transition p-6 border-r-4 border-yellow-500">
-        <div class="flex items-center gap-4">
-            <div class="w-14 h-14 bg-yellow-100 rounded-xl flex items-center justify-center">
-                <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div class="flex border-b border-gray-200">
+            <a href="{{ route('settings.ports.index') }}" class="flex-1 flex items-center justify-center gap-2 px-6 py-4 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition border-b-2 border-transparent">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
-            </div>
-            <div>
-                <h3 class="text-xl font-bold text-gray-800">إدارة المنافذ</h3>
-                <p class="text-gray-500">إضافة وتعديل المنافذ</p>
-            </div>
+                المنافذ
+            </a>
+            <a href="{{ route('settings.stations.index') }}" class="flex-1 flex items-center justify-center gap-2 px-6 py-4 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition border-b-2 border-transparent">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path>
+                </svg>
+                المخافر
+            </a>
+            @if(auth()->user()->isAdmin())
+            <a href="{{ route('settings.users.index') }}" class="flex-1 flex items-center justify-center gap-2 px-6 py-4 text-gray-700 bg-white border-b-2 border-blue-600 font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                المستخدمون
+            </a>
+            @endif
         </div>
-    </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <p class="text-center text-gray-500 py-8">اختر قسماً من الأعلى لعرض الإعدادات</p>
+    </div>
 </div>
 @endsection
