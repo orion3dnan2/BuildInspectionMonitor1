@@ -1,2 +1,19 @@
+modules = ["php-8.2"]
 [agent]
 expertMode = true
+
+[userenv]
+
+[userenv.shared]
+APP_NAME = "نظام التفتيش والمراقبة"
+APP_ENV = "local"
+APP_DEBUG = "true"
+APP_URL = "http://0.0.0.0:5000"
+APP_LOCALE = "ar"
+APP_FALLBACK_LOCALE = "en"
+APP_FAKER_LOCALE = "ar_SA"
+DB_CONNECTION = "pgsql"
+SESSION_DRIVER = "database"
+SESSION_LIFETIME = "120"
+CACHE_STORE = "database"
+QUEUE_CONNECTION = "database"
