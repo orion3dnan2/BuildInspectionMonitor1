@@ -150,36 +150,56 @@
 @endcan
 
 <div class="bg-white rounded-xl border border-slate-200 p-6">
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-bold text-slate-700">السجلات الأخيرة</h2>
-        <span class="text-sm text-slate-400">عدد السجلات: {{ $records->total() ?? 0 }}</span>
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+        <div>
+            <h2 class="text-lg font-bold text-slate-700">جدول البيانات</h2>
+            <span class="text-sm text-slate-400">إجمالي السجلات: {{ $records->total() ?? 0 }}</span>
+        </div>
+        
+        <form action="{{ route('records.index') }}" method="GET" class="flex gap-2 w-full md:w-auto">
+            <input type="text" name="search" value="{{ request('search') }}" 
+                placeholder="بحث برقم التتبع أو الاسم..."
+                class="flex-1 md:w-64 px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-1 focus:ring-sky-400 focus:border-sky-400">
+            <button type="submit" class="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-md text-sm transition">
+                بحث
+            </button>
+            @if(request('search'))
+            <a href="{{ route('records.index') }}" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-md text-sm transition">
+                إلغاء
+            </a>
+            @endif
+        </form>
     </div>
     
     @if($records->count() > 0)
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
-                <thead class="bg-slate-50">
+                <thead class="bg-slate-100">
                     <tr>
-                        <th class="px-4 py-3 text-right font-medium text-slate-500">رقم الصادر</th>
-                        <th class="px-4 py-3 text-right font-medium text-slate-500">الرقم العسكري</th>
-                        <th class="px-4 py-3 text-right font-medium text-slate-500">الاسم</th>
-                        <th class="px-4 py-3 text-right font-medium text-slate-500">الرتبة</th>
-                        <th class="px-4 py-3 text-right font-medium text-slate-500">المحافظة</th>
-                        <th class="px-4 py-3 text-right font-medium text-slate-500">تاريخ الجولة</th>
-                        <th class="px-4 py-3 text-right font-medium text-slate-500">الإجراءات</th>
+                        <th class="px-3 py-3 text-right font-semibold text-slate-600">رقم التتبع</th>
+                        <th class="px-3 py-3 text-right font-semibold text-slate-600">رقم الصادر</th>
+                        <th class="px-3 py-3 text-right font-semibold text-slate-600">الرقم العسكري</th>
+                        <th class="px-3 py-3 text-right font-semibold text-slate-600">الاسم</th>
+                        <th class="px-3 py-3 text-right font-semibold text-slate-600">الرتبة</th>
+                        <th class="px-3 py-3 text-right font-semibold text-slate-600">المحافظة</th>
+                        <th class="px-3 py-3 text-right font-semibold text-slate-600">المخفر/المنفذ</th>
+                        <th class="px-3 py-3 text-right font-semibold text-slate-600">تاريخ الجولة</th>
+                        <th class="px-3 py-3 text-center font-semibold text-slate-600">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @foreach($records as $record)
                     <tr class="hover:bg-slate-50">
-                        <td class="px-4 py-3 text-slate-700 font-medium">{{ $record->record_number }}</td>
-                        <td class="px-4 py-3 text-slate-600">{{ $record->military_id ?? '-' }}</td>
-                        <td class="px-4 py-3 text-slate-600">{{ $record->full_name }}</td>
-                        <td class="px-4 py-3 text-slate-600">{{ $record->rank ?? '-' }}</td>
-                        <td class="px-4 py-3 text-slate-600">{{ $record->governorate ?? '-' }}</td>
-                        <td class="px-4 py-3 text-slate-600">{{ $record->round_date?->format('Y-m-d') ?? '-' }}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
+                        <td class="px-3 py-3 text-sky-600 font-mono text-xs">{{ $record->tracking_number ?? '-' }}</td>
+                        <td class="px-3 py-3 text-slate-700 font-medium">{{ $record->record_number }}</td>
+                        <td class="px-3 py-3 text-slate-600">{{ $record->military_id ?? '-' }}</td>
+                        <td class="px-3 py-3 text-slate-600">{{ $record->full_name }}</td>
+                        <td class="px-3 py-3 text-slate-600">{{ $record->rank ?? '-' }}</td>
+                        <td class="px-3 py-3 text-slate-600">{{ $record->governorate ?? '-' }}</td>
+                        <td class="px-3 py-3 text-slate-600">{{ $record->station ?? $record->ports ?? '-' }}</td>
+                        <td class="px-3 py-3 text-slate-600">{{ $record->round_date?->format('Y-m-d') ?? '-' }}</td>
+                        <td class="px-3 py-3">
+                            <div class="flex items-center justify-center gap-2">
                                 <a href="{{ route('records.show', $record) }}" class="text-sky-600 hover:text-sky-800 text-xs font-medium">عرض</a>
                                 @can('update', $record)
                                 <a href="{{ route('records.edit', $record) }}" class="text-yellow-600 hover:text-yellow-800 text-xs font-medium">تعديل</a>
@@ -200,14 +220,42 @@
         </div>
 
         @if($records->hasPages())
-        <div class="p-4 border-t border-slate-200 mt-4">
-            {{ $records->links() }}
+        <div class="flex items-center justify-between border-t border-slate-200 pt-4 mt-4">
+            <div class="text-sm text-slate-500">
+                عرض {{ $records->firstItem() }} - {{ $records->lastItem() }} من {{ $records->total() }} سجل
+            </div>
+            <div class="flex items-center gap-1">
+                @if($records->onFirstPage())
+                    <span class="px-3 py-1 text-sm text-slate-400 bg-slate-100 rounded cursor-not-allowed">السابق</span>
+                @else
+                    <a href="{{ $records->previousPageUrl() }}" class="px-3 py-1 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded transition">السابق</a>
+                @endif
+                
+                @foreach($records->getUrlRange(max(1, $records->currentPage() - 2), min($records->lastPage(), $records->currentPage() + 2)) as $page => $url)
+                    @if($page == $records->currentPage())
+                        <span class="px-3 py-1 text-sm text-white bg-sky-500 rounded">{{ $page }}</span>
+                    @else
+                        <a href="{{ $url }}" class="px-3 py-1 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded transition">{{ $page }}</a>
+                    @endif
+                @endforeach
+                
+                @if($records->hasMorePages())
+                    <a href="{{ $records->nextPageUrl() }}" class="px-3 py-1 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded transition">التالي</a>
+                @else
+                    <span class="px-3 py-1 text-sm text-slate-400 bg-slate-100 rounded cursor-not-allowed">التالي</span>
+                @endif
+            </div>
         </div>
         @endif
     @else
         <div class="text-center py-12">
-            <p class="text-slate-600 font-medium">لا توجد سجلات</p>
-            <p class="text-slate-400 text-sm mt-1">قم بإضافة سجلات جديدة</p>
+            @if(request('search'))
+                <p class="text-slate-600 font-medium">لا توجد نتائج للبحث "{{ request('search') }}"</p>
+                <a href="{{ route('records.index') }}" class="text-sky-600 hover:text-sky-800 text-sm mt-2 inline-block">عرض كل السجلات</a>
+            @else
+                <p class="text-slate-600 font-medium">لا توجد سجلات</p>
+                <p class="text-slate-400 text-sm mt-1">قم بإضافة سجلات جديدة</p>
+            @endif
         </div>
     @endif
 </div>

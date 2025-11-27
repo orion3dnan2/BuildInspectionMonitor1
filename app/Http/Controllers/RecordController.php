@@ -17,7 +17,7 @@ class RecordController extends Controller
                 $query->search($search);
             })
             ->latest()
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         $stations = Station::orderBy('name')->get();

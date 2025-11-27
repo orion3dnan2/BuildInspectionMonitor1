@@ -12,6 +12,7 @@ class Record extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'tracking_number',
         'record_number',
         'military_id',
         'first_name',
@@ -27,6 +28,17 @@ class Record extends Model
         'round_date',
         'created_by',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($record) {
+            $lastId = static::withTrashed()->max('id') ?? 0;
+            $nextId = $lastId + 1;
+            $record->tracking_number = 'TRK-' . date('Y') . '-' . str_pad($nextId, 6, '0', STR_PAD_LEFT);
+        });
+    }
 
     protected function casts(): array
     {
@@ -53,7 +65,8 @@ class Record extends Model
     public function scopeSearch($query, $search)
     {
         return $query->where(function ($q) use ($search) {
-            $q->where('record_number', 'like', "%{$search}%")
+            $q->where('tracking_number', 'like', "%{$search}%")
+              ->orWhere('record_number', 'like', "%{$search}%")
               ->orWhere('military_id', 'like', "%{$search}%")
               ->orWhere('first_name', 'like', "%{$search}%")
               ->orWhere('second_name', 'like', "%{$search}%")
