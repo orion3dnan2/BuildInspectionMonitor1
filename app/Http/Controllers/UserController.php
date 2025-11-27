@@ -47,6 +47,8 @@ class UserController extends Controller
             'role' => 'required|in:admin,user',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string|in:' . implode(',', array_keys(User::availablePermissions())),
+            'system_access' => 'nullable|array',
+            'system_access.*' => 'string|in:' . implode(',', array_keys(User::availableSystems())),
             'rank' => 'nullable|string|max:255',
             'office' => 'nullable|string|max:255',
         ]);
@@ -55,6 +57,10 @@ class UserController extends Controller
             ? array_keys(User::availablePermissions()) 
             : ($validated['permissions'] ?? []);
 
+        $systemAccess = $validated['role'] === 'admin' 
+            ? array_keys(User::availableSystems()) 
+            : ($validated['system_access'] ?? []);
+
         $user = User::create([
             'name' => $validated['name'],
             'username' => $validated['username'],
@@ -62,6 +68,7 @@ class UserController extends Controller
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
             'permissions' => $permissions,
+            'system_access' => $systemAccess,
             'rank' => $validated['rank'] ?? null,
             'office' => $validated['office'] ?? null,
         ]);
@@ -99,6 +106,8 @@ class UserController extends Controller
             'role' => 'required|in:admin,user',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string|in:' . implode(',', array_keys(User::availablePermissions())),
+            'system_access' => 'nullable|array',
+            'system_access.*' => 'string|in:' . implode(',', array_keys(User::availableSystems())),
             'rank' => 'nullable|string|max:255',
             'office' => 'nullable|string|max:255',
         ]);
@@ -107,12 +116,17 @@ class UserController extends Controller
             ? array_keys(User::availablePermissions()) 
             : ($validated['permissions'] ?? []);
 
+        $systemAccess = $validated['role'] === 'admin' 
+            ? array_keys(User::availableSystems()) 
+            : ($validated['system_access'] ?? []);
+
         $data = [
             'name' => $validated['name'],
             'username' => $validated['username'],
             'email' => $validated['email'] ?? null,
             'role' => $validated['role'],
             'permissions' => $permissions,
+            'system_access' => $systemAccess,
             'rank' => $validated['rank'] ?? null,
             'office' => $validated['office'] ?? null,
         ];

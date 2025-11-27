@@ -90,6 +90,21 @@
                 @enderror
             </div>
 
+            <div class="mb-6 p-4 bg-sky-50 rounded-lg border border-sky-200" id="system_access_section">
+                <label class="block text-sm font-medium text-slate-700 mb-4">الوصول للأنظمة</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    @foreach(\App\Models\User::availableSystems() as $key => $label)
+                    <label class="flex items-center gap-3 p-3 bg-white rounded border border-slate-200 cursor-pointer hover:border-sky-300 transition">
+                        <input type="checkbox" name="system_access[]" value="{{ $key }}" 
+                            {{ in_array($key, old('system_access', [])) ? 'checked' : '' }}
+                            class="w-4 h-4 text-sky-500 border-slate-300 rounded focus:ring-sky-400 system-access-checkbox">
+                        <span class="text-sm text-slate-600">{{ $label }}</span>
+                    </label>
+                    @endforeach
+                </div>
+                <p class="text-xs text-slate-400 mt-3">حدد الأنظمة التي يمكن للمستخدم الوصول إليها</p>
+            </div>
+
             <div class="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200" id="permissions_section">
                 <label class="block text-sm font-medium text-slate-700 mb-4">الصلاحيات المتاحة</label>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -123,22 +138,31 @@ document.addEventListener('DOMContentLoaded', function() {
     const adminRadio = document.getElementById('role_admin');
     const userRadio = document.getElementById('role_user');
     const permissionsSection = document.getElementById('permissions_section');
-    const checkboxes = document.querySelectorAll('.permission-checkbox');
+    const systemAccessSection = document.getElementById('system_access_section');
+    const permissionCheckboxes = document.querySelectorAll('.permission-checkbox');
+    const systemAccessCheckboxes = document.querySelectorAll('.system-access-checkbox');
 
-    function togglePermissions() {
+    function toggleSections() {
         if (adminRadio.checked) {
             permissionsSection.style.opacity = '0.5';
             permissionsSection.style.pointerEvents = 'none';
-            checkboxes.forEach(cb => cb.checked = true);
+            permissionCheckboxes.forEach(cb => cb.checked = true);
+            
+            systemAccessSection.style.opacity = '0.5';
+            systemAccessSection.style.pointerEvents = 'none';
+            systemAccessCheckboxes.forEach(cb => cb.checked = true);
         } else {
             permissionsSection.style.opacity = '1';
             permissionsSection.style.pointerEvents = 'auto';
+            
+            systemAccessSection.style.opacity = '1';
+            systemAccessSection.style.pointerEvents = 'auto';
         }
     }
 
-    adminRadio.addEventListener('change', togglePermissions);
-    userRadio.addEventListener('change', togglePermissions);
-    togglePermissions();
+    adminRadio.addEventListener('change', toggleSections);
+    userRadio.addEventListener('change', toggleSections);
+    toggleSections();
 });
 </script>
 @endpush
