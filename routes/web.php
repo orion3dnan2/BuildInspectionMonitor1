@@ -13,6 +13,7 @@ use App\Http\Controllers\PortController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\BookEntryController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\AttendanceController;
@@ -92,6 +93,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/import/template', [ImportController::class, 'template'])->name('import.template');
     });
     
+    Route::get('/forbidden', function () {
+        return view('errors.forbidden');
+    })->name('forbidden');
+    
     Route::middleware('admin')->group(function () {
         Route::get('/settings/users', [UserController::class, 'index'])->name('settings.users.index');
         Route::get('/settings/users/create', [UserController::class, 'create'])->name('settings.users.create');
@@ -100,6 +105,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/settings/users/{user}/edit', [UserController::class, 'edit'])->name('settings.users.edit');
         Route::put('/settings/users/{user}', [UserController::class, 'update'])->name('settings.users.update');
         Route::delete('/settings/users/{user}', [UserController::class, 'destroy'])->name('settings.users.destroy');
+        Route::get('/settings/users/{user}/permissions', [PermissionController::class, 'userPermissions'])->name('settings.users.permissions');
+        Route::put('/settings/users/{user}/permissions', [PermissionController::class, 'updateUserPermissions'])->name('settings.users.update-permissions');
+        
+        Route::get('/settings/permissions', [PermissionController::class, 'index'])->name('settings.permissions.index');
+        Route::get('/settings/permissions/roles', [PermissionController::class, 'roles'])->name('settings.permissions.roles');
+        Route::get('/settings/permissions/roles/create', [PermissionController::class, 'createRole'])->name('settings.permissions.create-role');
+        Route::post('/settings/permissions/roles', [PermissionController::class, 'storeRole'])->name('settings.permissions.store-role');
+        Route::get('/settings/permissions/roles/{role}/edit', [PermissionController::class, 'editRole'])->name('settings.permissions.edit-role');
+        Route::put('/settings/permissions/roles/{role}', [PermissionController::class, 'updateRole'])->name('settings.permissions.update-role');
+        Route::delete('/settings/permissions/roles/{role}', [PermissionController::class, 'destroyRole'])->name('settings.permissions.destroy-role');
+        Route::post('/settings/permissions/sync', [PermissionController::class, 'syncPermissions'])->name('settings.permissions.sync');
     });
 
     Route::prefix('admin')->name('admin.')->middleware(['role:admin,supervisor', 'system:admin_system'])->group(function () {
