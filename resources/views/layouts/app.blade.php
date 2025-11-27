@@ -247,14 +247,33 @@
                             <p class="text-xs text-slate-400 dark:text-slate-500">{{ auth()->user()->role_name }}</p>
                         </div>
                     </div>
-                    <button id="darkModeToggle" type="button" class="p-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition">
-                        <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                        <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                        </svg>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <div class="relative" id="notificationContainer">
+                            <button id="notificationBtn" type="button" class="p-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition relative">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                </svg>
+                                <span id="notificationBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">0</span>
+                            </button>
+                            <div id="notificationDropdown" class="hidden absolute left-0 bottom-full mb-2 w-80 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 max-h-96 overflow-hidden">
+                                <div class="p-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                                    <h3 class="font-bold text-slate-700 dark:text-white text-sm">الإشعارات</h3>
+                                    <button id="markAllRead" class="text-xs text-sky-500 hover:text-sky-600">تحديد الكل كمقروء</button>
+                                </div>
+                                <div id="notificationList" class="max-h-72 overflow-y-auto">
+                                    <div class="p-4 text-center text-slate-400 text-sm">جاري التحميل...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="darkModeToggle" type="button" class="p-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition">
+                            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                            <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
@@ -298,6 +317,166 @@
                 localStorage.setItem('darkMode', 'true');
             }
         });
+
+        // Notification System
+        const notificationBtn = document.getElementById('notificationBtn');
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        const notificationBadge = document.getElementById('notificationBadge');
+        const notificationList = document.getElementById('notificationList');
+        const markAllReadBtn = document.getElementById('markAllRead');
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+        let notificationsData = [];
+
+        function updateBadge(count) {
+            if (count > 0) {
+                notificationBadge.textContent = count > 99 ? '99+' : count;
+                notificationBadge.classList.remove('hidden');
+                notificationBadge.classList.add('flex');
+            } else {
+                notificationBadge.classList.add('hidden');
+                notificationBadge.classList.remove('flex');
+            }
+        }
+
+        function renderNotifications(notifications) {
+            if (notifications.length === 0) {
+                notificationList.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">لا توجد إشعارات</div>';
+                return;
+            }
+
+            notificationList.innerHTML = notifications.map(notification => `
+                <a href="${notification.url || '#'}" 
+                   class="block p-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition ${notification.read_at ? 'opacity-60' : ''}"
+                   data-notification-id="${notification.id}">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center ${notification.color}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${notification.icon}"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-slate-700 dark:text-white truncate">${notification.title}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">${notification.message}</p>
+                            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">${notification.created_at}</p>
+                        </div>
+                        ${!notification.read_at ? '<span class="w-2 h-2 bg-sky-500 rounded-full flex-shrink-0"></span>' : ''}
+                    </div>
+                </a>
+            `).join('');
+
+            // Add click handlers to mark as read
+            notificationList.querySelectorAll('[data-notification-id]').forEach(el => {
+                el.addEventListener('click', function(e) {
+                    const id = this.dataset.notificationId;
+                    markAsRead(id);
+                });
+            });
+        }
+
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/notifications');
+                const data = await response.json();
+                notificationsData = data.notifications;
+                updateBadge(data.unread_count);
+                renderNotifications(notificationsData);
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        async function loadCounts() {
+            try {
+                const response = await fetch('/notifications/counts');
+                const data = await response.json();
+                updateBadge(data.unread_notifications);
+                
+                // Update inbox badges
+                const booksInboxBadge = document.getElementById('booksInboxBadge');
+                const docsInboxBadge = document.getElementById('docsInboxBadge');
+                
+                if (booksInboxBadge) {
+                    if (data.pending_books > 0) {
+                        booksInboxBadge.textContent = data.pending_books;
+                        booksInboxBadge.classList.remove('hidden');
+                    } else {
+                        booksInboxBadge.classList.add('hidden');
+                    }
+                }
+                
+                if (docsInboxBadge) {
+                    if (data.pending_documents > 0) {
+                        docsInboxBadge.textContent = data.pending_documents;
+                        docsInboxBadge.classList.remove('hidden');
+                    } else {
+                        docsInboxBadge.classList.add('hidden');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading counts:', error);
+            }
+        }
+
+        async function markAsRead(id) {
+            try {
+                await fetch(`/notifications/${id}/read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                });
+                loadCounts();
+            } catch (error) {
+                console.error('Error marking as read:', error);
+            }
+        }
+
+        async function markAllAsRead() {
+            try {
+                await fetch('/notifications/read-all', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                });
+                loadNotifications();
+                loadCounts();
+            } catch (error) {
+                console.error('Error marking all as read:', error);
+            }
+        }
+
+        notificationBtn?.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isHidden = notificationDropdown.classList.contains('hidden');
+            if (isHidden) {
+                loadNotifications();
+                notificationDropdown.classList.remove('hidden');
+            } else {
+                notificationDropdown.classList.add('hidden');
+            }
+        });
+
+        markAllReadBtn?.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            markAllAsRead();
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!notificationDropdown?.contains(e.target) && !notificationBtn?.contains(e.target)) {
+                notificationDropdown?.classList.add('hidden');
+            }
+        });
+
+        // Load initial counts
+        loadCounts();
+        
+        // Refresh counts every 30 seconds
+        setInterval(loadCounts, 30000);
     </script>
     @stack('scripts')
 </body>
