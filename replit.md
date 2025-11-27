@@ -73,6 +73,17 @@ This system allows officers to record and manage inspection records with full CR
 - **My Documents**: Track created documents and their workflow status
 - **Print View**: Print-friendly document layout with signature
 
+### Notification System (نظام الإشعارات)
+- **Real-time Notifications**: Bell icon in sidebar with unread count badge
+- **Notification Types**: 
+  - Book workflow: submitted, approved, rejected, needs_edit
+  - Document workflow: submitted, sent_for_review, sent_to_manager, approved, rejected, needs_modification
+- **Inbox Badge Counts**: Dynamic counts on sidebar inbox links for pending items
+- **Notification Dropdown**: Click bell to see latest 5 notifications with timestamps
+- **Mark as Read**: Individual or bulk mark all as read
+- **Auto Refresh**: Counts refresh every 30 seconds via JavaScript polling
+- **Arabic Localization**: Full Arabic notification messages
+
 ### UI Features
 - Modern, clean government-style admin panel
 - Full Arabic RTL support
@@ -81,6 +92,7 @@ This system allows officers to record and manage inspection records with full CR
 - Data tables with pagination and search
 - Quick login cards on login page for testing
 - Tabbed home page (Block System / Administrative System)
+- Notification bell with dropdown in sidebar footer
 
 ## Project Structure
 
@@ -100,6 +112,7 @@ app/
 │   │   ├── StationController.php
 │   │   ├── PortController.php
 │   │   ├── BookEntryController.php
+│   │   ├── NotificationController.php
 │   │   └── Admin/
 │   │       ├── DepartmentController.php
 │   │       ├── EmployeeController.php
@@ -123,7 +136,8 @@ app/
 │   ├── Document.php
 │   ├── DocumentWorkflow.php
 │   ├── BookEntry.php
-│   └── Signature.php
+│   ├── Signature.php
+│   └── Notification.php
 ├── Policies/
 │   ├── RecordPolicy.php
 │   └── UserPolicy.php
@@ -241,6 +255,7 @@ Using PostgreSQL (Neon) with the following tables:
 - `document_workflows` - Document workflow history and signatures
 - `book_entries` - Book entry management with approval workflow
 - `signatures` - Electronic signatures with hash verification
+- `notifications` - User notifications for workflow events
 
 ## Environment Variables
 
