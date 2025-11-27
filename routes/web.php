@@ -11,6 +11,11 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\StationController;
 use App\Http\Controllers\PortController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\Admin\DepartmentController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\LeaveRequestController;
+use App\Http\Controllers\Admin\DocumentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -70,5 +75,30 @@ Route::middleware('auth')->group(function () {
         Route::get('/settings/users/{user}/edit', [UserController::class, 'edit'])->name('settings.users.edit');
         Route::put('/settings/users/{user}', [UserController::class, 'update'])->name('settings.users.update');
         Route::delete('/settings/users/{user}', [UserController::class, 'destroy'])->name('settings.users.destroy');
+    });
+
+    Route::prefix('admin')->name('admin.')->middleware('role:admin,supervisor')->group(function () {
+        Route::resource('departments', DepartmentController::class);
+        
+        Route::resource('employees', EmployeeController::class);
+        
+        Route::get('attendances/bulk-create', [AttendanceController::class, 'bulkCreate'])->name('attendances.bulk-create');
+        Route::post('attendances/bulk-store', [AttendanceController::class, 'bulkStore'])->name('attendances.bulk-store');
+        Route::get('attendances/report', [AttendanceController::class, 'report'])->name('attendances.report');
+        Route::resource('attendances', AttendanceController::class);
+        
+        Route::post('leave-requests/{leaveRequest}/approve', [LeaveRequestController::class, 'approve'])->name('leave-requests.approve');
+        Route::post('leave-requests/{leaveRequest}/reject', [LeaveRequestController::class, 'reject'])->name('leave-requests.reject');
+        Route::resource('leave-requests', LeaveRequestController::class);
+        
+        Route::get('documents/inbox', [DocumentController::class, 'inbox'])->name('documents.inbox');
+        Route::get('documents/my-documents', [DocumentController::class, 'myDocuments'])->name('documents.my-documents');
+        Route::get('documents/{document}/print', [DocumentController::class, 'print'])->name('documents.print');
+        Route::post('documents/{document}/send-for-review', [DocumentController::class, 'sendForReview'])->name('documents.send-for-review');
+        Route::post('documents/{document}/send-to-manager', [DocumentController::class, 'sendToManager'])->name('documents.send-to-manager');
+        Route::post('documents/{document}/approve', [DocumentController::class, 'approve'])->name('documents.approve');
+        Route::post('documents/{document}/reject', [DocumentController::class, 'reject'])->name('documents.reject');
+        Route::post('documents/{document}/request-modification', [DocumentController::class, 'requestModification'])->name('documents.request-modification');
+        Route::resource('documents', DocumentController::class);
     });
 });
