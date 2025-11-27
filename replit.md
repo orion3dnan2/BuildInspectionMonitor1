@@ -95,6 +95,18 @@ This system allows officers to record and manage inspection records with full CR
 - **Permission Middleware**: Route-level access control via `permission:key` middleware
 - **UI Management**: Full admin interface for role and permission management in Settings
 
+### Correspondences Module (المرسلات والكتب)
+- **Document Types**: Incoming (وارد) and Outgoing (صادر)
+- **Auto-Numbering**: Automatic sequential numbering by type and year (IN-2025-0001, OUT-2025-0001)
+- **Status Tracking**: New → Reviewed → Completed → Archived
+- **File Upload**: Support for PDF, Word, images, and other file types (up to 20MB)
+- **File Preview**: In-browser preview for PDF and images, download for Word files
+- **Quick Import**: Upload a file directly from device to create a new correspondence
+- **Advanced Search**: Multi-criteria search by document number, title, type, department, date range, status
+- **Sender/Receiver Tracking**: Track originating and receiving departments
+- **Audit Trail**: Track who created and last updated each correspondence
+- **Soft Deletes**: Deleted correspondences can be recovered
+
 ### UI Features
 - Modern, clean government-style admin panel
 - Full Arabic RTL support
@@ -130,7 +142,8 @@ app/
 │   │       ├── EmployeeController.php
 │   │       ├── AttendanceController.php
 │   │       ├── LeaveRequestController.php
-│   │       └── DocumentController.php
+│   │       ├── DocumentController.php
+│   │       └── CorrespondenceController.php
 │   ├── Middleware/
 │   │   ├── AdminMiddleware.php
 │   │   ├── RoleMiddleware.php
@@ -152,7 +165,8 @@ app/
 │   ├── Signature.php
 │   ├── Notification.php
 │   ├── Permission.php
-│   └── Role.php
+│   ├── Role.php
+│   └── Correspondence.php
 ├── Policies/
 │   ├── RecordPolicy.php
 │   └── UserPolicy.php
@@ -214,14 +228,21 @@ resources/views/
     │   ├── create.blade.php
     │   ├── show.blade.php
     │   └── edit.blade.php
-    └── documents/
+    ├── documents/
+    │   ├── index.blade.php
+    │   ├── create.blade.php
+    │   ├── show.blade.php
+    │   ├── edit.blade.php
+    │   ├── inbox.blade.php
+    │   ├── my-documents.blade.php
+    │   └── print.blade.php
+    └── correspondences/
         ├── index.blade.php
         ├── create.blade.php
         ├── show.blade.php
         ├── edit.blade.php
-        ├── inbox.blade.php
-        ├── my-documents.blade.php
-        └── print.blade.php
+        ├── import.blade.php
+        └── search.blade.php
 
 routes/
 ├── web.php
@@ -271,6 +292,7 @@ Using PostgreSQL (Neon) with the following tables:
 - `book_entries` - Book entry management with approval workflow
 - `signatures` - Electronic signatures with hash verification
 - `notifications` - User notifications for workflow events
+- `correspondences` - Incoming and outgoing correspondence documents
 
 ## Environment Variables
 

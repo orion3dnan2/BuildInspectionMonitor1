@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\LeaveRequestController;
 use App\Http\Controllers\Admin\DocumentController;
+use App\Http\Controllers\Admin\CorrespondenceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -141,5 +142,12 @@ Route::middleware('auth')->group(function () {
         Route::post('documents/{document}/reject', [DocumentController::class, 'reject'])->name('documents.reject');
         Route::post('documents/{document}/request-modification', [DocumentController::class, 'requestModification'])->name('documents.request-modification');
         Route::resource('documents', DocumentController::class);
+        
+        Route::get('correspondences/search', [CorrespondenceController::class, 'searchForm'])->name('correspondences.search-form');
+        Route::get('correspondences/search/results', [CorrespondenceController::class, 'search'])->name('correspondences.search');
+        Route::get('correspondences/import', [CorrespondenceController::class, 'import'])->name('correspondences.import');
+        Route::post('correspondences/import', [CorrespondenceController::class, 'storeImport'])->name('correspondences.store-import');
+        Route::get('correspondences/{correspondence}/download', [CorrespondenceController::class, 'download'])->name('correspondences.download');
+        Route::resource('correspondences', CorrespondenceController::class);
     });
 });
