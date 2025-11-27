@@ -10,17 +10,17 @@
         * { font-family: 'Tajawal', sans-serif; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md">
-        <div class="bg-white rounded-2xl shadow-2xl p-8">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
             <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-4">
-                    <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-sky-50 border border-sky-100 rounded-full mb-4">
+                    <svg class="w-8 h-8 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                     </svg>
                 </div>
-                <h1 class="text-2xl font-bold text-gray-800">نظام إدارة الرقابة والتفتيش</h1>
-                <p class="text-gray-500 mt-2">قم بتسجيل الدخول للمتابعة</p>
+                <h1 class="text-xl font-bold text-slate-700">نظام إدارة الرقابة والتفتيش</h1>
+                <p class="text-slate-400 mt-1 text-sm">قم بتسجيل الدخول للمتابعة</p>
             </div>
 
             @if($errors->any())
@@ -31,88 +31,84 @@
             </div>
             @endif
 
-            <form method="POST" action="{{ route('login') }}" class="space-y-6">
+            <form method="POST" action="{{ route('login') }}" class="space-y-5">
                 @csrf
                 <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label>
+                    <label for="username" class="block text-sm font-medium text-slate-600 mb-2">اسم المستخدم</label>
                     <input type="text" name="username" id="username" value="{{ old('username') }}" required autofocus
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition text-sm"
                         placeholder="أدخل اسم المستخدم">
                 </div>
 
                 <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
+                    <label for="password" class="block text-sm font-medium text-slate-600 mb-2">كلمة المرور</label>
                     <input type="password" name="password" id="password" required
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition text-sm"
                         placeholder="أدخل كلمة المرور">
                 </div>
 
                 <div class="flex items-center">
-                    <input type="checkbox" name="remember" id="remember" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                    <label for="remember" class="mr-2 text-sm text-gray-600">تذكرني</label>
+                    <input type="checkbox" name="remember" id="remember" class="w-4 h-4 text-sky-500 border-slate-300 rounded focus:ring-sky-400">
+                    <label for="remember" class="mr-2 text-sm text-slate-500">تذكرني</label>
                 </div>
 
-                <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition">
+                <button type="submit" class="w-full bg-sky-500 text-white py-2.5 px-4 rounded-lg font-medium hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-300 transition text-sm">
                     تسجيل الدخول
                 </button>
             </form>
-
-            <div class="mt-6 text-center">
-                <a href="{{ route('register') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">ليس لديك حساب؟ سجل الآن</a>
-            </div>
         </div>
 
-        <div class="mt-6 bg-white/10 backdrop-blur-sm rounded-xl p-4">
-            <p class="text-center text-white text-sm mb-4 font-medium">حسابات تجريبية للدخول السريع</p>
-            <div class="grid grid-cols-1 gap-3">
-                <button onclick="fillLogin('admin', 'Admin123!')" class="flex items-center justify-between bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-lg transition cursor-pointer">
+        <div class="mt-5 bg-white rounded-xl border border-slate-200 p-4">
+            <p class="text-center text-slate-500 text-sm mb-4 font-medium">حسابات تجريبية للدخول السريع</p>
+            <div class="grid grid-cols-1 gap-2">
+                <button onclick="fillLogin('admin', 'Admin123!')" class="flex items-center justify-between bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-3 rounded-lg transition cursor-pointer border border-slate-200">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-9 h-9 bg-sky-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                             </svg>
                         </div>
                         <div class="text-right">
-                            <p class="font-medium">مدير النظام</p>
-                            <p class="text-xs text-blue-200">admin / Admin123!</p>
+                            <p class="font-medium text-sm text-slate-700">مدير النظام</p>
+                            <p class="text-xs text-slate-400">admin / Admin123!</p>
                         </div>
                     </div>
-                    <span class="bg-red-500 text-xs px-2 py-1 rounded">مدير</span>
+                    <span class="bg-sky-100 text-sky-600 text-xs px-2 py-1 rounded font-medium">مدير</span>
                 </button>
 
-                <button onclick="fillLogin('supervisor', '123456')" class="flex items-center justify-between bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-lg transition cursor-pointer">
+                <button onclick="fillLogin('supervisor', '123456')" class="flex items-center justify-between bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-3 rounded-lg transition cursor-pointer border border-slate-200">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-9 h-9 bg-amber-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
                         </div>
                         <div class="text-right">
-                            <p class="font-medium">المشرف</p>
-                            <p class="text-xs text-blue-200">supervisor / 123456</p>
+                            <p class="font-medium text-sm text-slate-700">المشرف</p>
+                            <p class="text-xs text-slate-400">supervisor / 123456</p>
                         </div>
                     </div>
-                    <span class="bg-yellow-500 text-xs px-2 py-1 rounded">مشرف</span>
+                    <span class="bg-amber-100 text-amber-600 text-xs px-2 py-1 rounded font-medium">مشرف</span>
                 </button>
 
-                <button onclick="fillLogin('user1', '123456')" class="flex items-center justify-between bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-lg transition cursor-pointer">
+                <button onclick="fillLogin('user1', '123456')" class="flex items-center justify-between bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-3 rounded-lg transition cursor-pointer border border-slate-200">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-9 h-9 bg-slate-200 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
                         </div>
                         <div class="text-right">
-                            <p class="font-medium">مستخدم عادي</p>
-                            <p class="text-xs text-blue-200">user1 / 123456</p>
+                            <p class="font-medium text-sm text-slate-700">مستخدم عادي</p>
+                            <p class="text-xs text-slate-400">user1 / 123456</p>
                         </div>
                     </div>
-                    <span class="bg-blue-500 text-xs px-2 py-1 rounded">مستخدم</span>
+                    <span class="bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded font-medium">مستخدم</span>
                 </button>
             </div>
         </div>
 
-        <p class="text-center text-blue-200 text-sm mt-6">جميع الحقوق محفوظة &copy; {{ date('Y') }}</p>
+        <p class="text-center text-slate-400 text-xs mt-5">جميع الحقوق محفوظة &copy; {{ date('Y') }}</p>
     </div>
 
     <script>
