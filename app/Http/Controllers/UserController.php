@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Log;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Gate;
@@ -32,32 +33,33 @@ class UserController extends Controller
     {
         Gate::authorize('create', User::class);
         
-        return view('settings.users.create');
+        $roles = Role::orderBy('level', 'desc')->get();
+        
+        return view('settings.users.create', compact('roles'));
     }
 
     public function store(Request $request)
     {
         Gate::authorize('create', User::class);
         
+        $roleIds = Role::pluck('id')->toArray();
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users',
             'email' => 'nullable|email|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:admin,supervisor,user',
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'string|in:' . implode(',', array_keys(User::availablePermissions())),
+            'role_id' => 'required|in:' . implode(',', $roleIds),
             'system_access' => 'nullable|array',
             'system_access.*' => 'string|in:' . implode(',', array_keys(User::availableSystems())),
             'rank' => 'nullable|string|max:255',
             'office' => 'nullable|string|max:255',
         ]);
 
-        $permissions = $validated['role'] === 'admin' 
-            ? array_keys(User::availablePermissions()) 
-            : ($validated['permissions'] ?? []);
+        $role = Role::find($validated['role_id']);
+        $isAdmin = $role && $role->slug === 'admin';
 
-        $systemAccess = $validated['role'] === 'admin' 
+        $systemAccess = $isAdmin 
             ? array_keys(User::availableSystems()) 
             : ($validated['system_access'] ?? ['block_system']);
 
@@ -66,12 +68,13 @@ class UserController extends Controller
             'username' => $validated['username'],
             'email' => $validated['email'] ?? null,
             'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
-            'permissions' => $permissions,
+            'role' => $role->slug,
             'system_access' => $systemAccess,
             'rank' => $validated['rank'] ?? null,
             'office' => $validated['office'] ?? null,
         ]);
+
+        $user->roles()->sync([$validated['role_id']]);
 
         Log::record('create_user', 'إنشاء مستخدم جديد: ' . $user->name);
 
@@ -91,32 +94,34 @@ class UserController extends Controller
     {
         Gate::authorize('update', $user);
         
-        return view('settings.users.edit', compact('user'));
+        $roles = Role::orderBy('level', 'desc')->get();
+        $userRoleIds = $user->roles->pluck('id')->toArray();
+        
+        return view('settings.users.edit', compact('user', 'roles', 'userRoleIds'));
     }
 
     public function update(Request $request, User $user)
     {
         Gate::authorize('update', $user);
         
+        $roleIds = Role::pluck('id')->toArray();
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'email' => ['nullable', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:6|confirmed',
-            'role' => 'required|in:admin,supervisor,user',
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'string|in:' . implode(',', array_keys(User::availablePermissions())),
+            'role_id' => 'required|in:' . implode(',', $roleIds),
             'system_access' => 'nullable|array',
             'system_access.*' => 'string|in:' . implode(',', array_keys(User::availableSystems())),
             'rank' => 'nullable|string|max:255',
             'office' => 'nullable|string|max:255',
         ]);
 
-        $permissions = $validated['role'] === 'admin' 
-            ? array_keys(User::availablePermissions()) 
-            : ($validated['permissions'] ?? []);
+        $role = Role::find($validated['role_id']);
+        $isAdmin = $role && $role->slug === 'admin';
 
-        $systemAccess = $validated['role'] === 'admin' 
+        $systemAccess = $isAdmin 
             ? array_keys(User::availableSystems()) 
             : ($validated['system_access'] ?? ['block_system']);
 
@@ -124,8 +129,7 @@ class UserController extends Controller
             'name' => $validated['name'],
             'username' => $validated['username'],
             'email' => $validated['email'] ?? null,
-            'role' => $validated['role'],
-            'permissions' => $permissions,
+            'role' => $role->slug,
             'system_access' => $systemAccess,
             'rank' => $validated['rank'] ?? null,
             'office' => $validated['office'] ?? null,
@@ -136,6 +140,7 @@ class UserController extends Controller
         }
 
         $user->update($data);
+        $user->roles()->sync([$validated['role_id']]);
 
         Log::record('update_user', 'تعديل مستخدم: ' . $user->name);
 
