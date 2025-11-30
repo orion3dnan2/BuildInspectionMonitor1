@@ -1,0 +1,24 @@
+# ======================================
+# أضف هذه الإعدادات في ملف .env
+# ======================================
+
+# Session Settings - مهم جداً!
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+SESSION_DOMAIN=null
+SESSION_SECURE_COOKIE=false
+SESSION_SAME_SITE=lax
+
+# App Settings
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://172.19.196.208:8000
+
+# ======================================
+# تعليمات:
+# 1. افتح ملف .env في مجلد المشروع
+# 2. ابحث عن SESSION_DRIVER وغيّره إلى file
+# 3. أضف باقي الإعدادات أعلاه
+# 4. احفظ الملف
+# 5. نفذ: php artisan config:clear
+# ======================================
