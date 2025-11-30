@@ -49,7 +49,8 @@ class Permission extends Model
             'employees' => 'الموظفين',
             'attendances' => 'الحضور والانصراف',
             'leave_requests' => 'طلبات الإجازات',
-            'documents' => 'المراسلات',
+            'documents' => 'المراسلات الداخلية',
+            'correspondences' => 'الوارد والصادر',
             'permissions' => 'الصلاحيات',
         ];
     }
@@ -115,6 +116,7 @@ class Permission extends Model
             'attendances' => ['view', 'create', 'update', 'delete', 'import'],
             'leave_requests' => ['view', 'create', 'update', 'delete', 'approve', 'reject'],
             'documents' => ['view', 'create', 'update', 'delete', 'approve', 'reject', 'print'],
+            'correspondences' => ['view', 'create', 'update', 'delete', 'import', 'print'],
             'permissions' => ['view', 'manage'],
         ];
 
