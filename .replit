@@ -19,6 +19,7 @@ CACHE_STORE = "database"
 QUEUE_CONNECTION = "database"
 SESSION_SECURE_COOKIE = "false"
 SESSION_SAME_SITE = "lax"
+DB_URL = "${DATABASE_URL}"
 
 [workflows]
 runButton = "Project"
