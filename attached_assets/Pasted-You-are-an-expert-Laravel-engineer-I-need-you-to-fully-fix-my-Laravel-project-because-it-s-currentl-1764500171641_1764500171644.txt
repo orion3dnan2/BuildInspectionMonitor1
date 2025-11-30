@@ -1,0 +1,125 @@
+You are an expert Laravel engineer. I need you to fully fix my Laravel project because it's currently not logging in and showing two major errors:
+
+1) 419 PAGE EXPIRED when submitting login.
+2) ErrorException: file_put_contents(storage/framework/views/...): Permission denied.
+3) PHP Fatal error: InvalidArgumentException: Driver [file] not supported (Session driver issue).
+
+Below is ALL the information you need:
+
+--------------------------------
+PROJECT DESCRIPTION
+--------------------------------
+This Laravel project is an “Inspection & Monitoring System”.
+It uses:
+- Laravel 10 (PHP 8.3)
+- MySQL database
+- SESSION_DRIVER=file
+- Sanctum enabled
+- Vite + Blade (not a SPA)
+- Running on a Linux VM with PHP artisan serve (port 8000)
+
+--------------------------------
+PROJECT STRUCTURE (IMPORTANT)
+--------------------------------
+- Backend: Laravel (Blade views)
+- Views path: resources/views/auth/login.blade.php
+- Database: MySQL
+- Storage path: storage/framework/sessions and storage/framework/views
+
+--------------------------------
+THE MAIN PROBLEMS
+--------------------------------
+1) Sessions are not being created correctly.
+   - Laravel shows “Driver [file] not supported” inside vendor/Illuminate/Support/Manager.php.
+   - 419 Page Expired when logging in due to CSRF token mismatch.
+   - Session files exist but Laravel cannot write new files.
+   - storage/framework/views cannot write compiled blade templates → permission denied.
+
+2) Permissions inside storage/ are wrong.
+   Example:
+   storage/ and storage/framework are owned by "www-data" instead of my user "orion".
+   Laravel fails when creating sessions or compiled Blade files.
+
+3) The .env configuration might be outdated or missing keys.
+
+--------------------------------
+CURRENT .env FILE (USE IT TO FIX)
+--------------------------------
+APP_NAME="Inspection System"
+APP_ENV=local
+APP_KEY=base64:cra0GxYluT0UF3h4sBPsHWxQKVqsFYT3ioxP8sddUU4=
+APP_DEBUG=true
+APP_URL=http://172.19.196.208:8000
+
+APP_LOCALE=ar
+APP_FALLBACK_LOCALE=ar
+APP_FAKER_LOCALE=en_US
+APP_TIMEZONE=Asia/Kuwait
+
+LOG_CHANNEL=stack
+LOG_LEVEL=debug
+
+DB_CONNECTION=mysql
+DB_HOST=192.168.8.8
+DB_PORT=3306
+DB_DATABASE=inspection_db
+DB_USERNAME=inspector
+DB_PASSWORD=StrongPass123!
+
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+SESSION_DOMAIN=172.19.196.208
+SESSION_SECURE_COOKIE=false
+SESSION_HTTP_ONLY=false
+SESSION_SAME_SITE=lax
+SESSION_COOKIE=inspection_session
+
+SANCTUM_STATEFUL_DOMAINS=172.19.196.208:8000
+
+VITE_APP_URL=http://172.19.196.208:8000
+VITE_APP_NAME="${APP_NAME}"
+
+--------------------------------
+WHAT I NEED YOU TO DO (VERY IMPORTANT)
+--------------------------------
+1) Fix ALL session driver errors.
+   - Ensure SESSION_DRIVER=file works.
+   - Ensure Laravel can write to storage/framework/sessions.
+   - Ensure CSRF tokens work and 419 is gone.
+
+2) Fix file_put_contents() Permission denied.
+   - Reset all storage and bootstrap/cache permissions.
+   - Ensure correct chmod + chown logic.
+
+3) Rebuild and fix the entire config/session.php file if needed.
+   - Use correct Laravel defaults.
+   - Ensure same_site, secure, http_only, domain values are correct.
+
+4) Check login.blade.php and fix CSRF issues.
+   - Ensure @csrf exists.
+   - Ensure form method POST is correct.
+
+5) Clear and rebuild:
+   - config cache
+   - route cache
+   - view cache
+   - session cache
+
+6) Ensure "php artisan serve --host=0.0.0.0 --port=8000" runs without ANY errors.
+
+7) Deliver the solution:
+   - Clean code
+   - Fix all directories
+   - Correct .env if needed
+   - Ensure login finally works successfully
+
+--------------------------------
+FINAL OUTPUT REQUIRED FROM YOU
+--------------------------------
+1) Provide all corrected code files.
+2) Provide all fixed configurations.
+3) Provide bash commands needed on Linux to fix permissions.
+4) Provide updated .env if necessary.
+5) Verify that login works with SESSION_DRIVER=file and no more 419 errors.
+
+IMPORTANT: Do NOT rebuild the project. Fix the existing one.
