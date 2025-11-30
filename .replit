@@ -1,4 +1,4 @@
-modules = ["php-8.2", "web", "nodejs-20"]
+modules = ["php-8.2", "bash", "web", "nodejs-20"]
 [agent]
 expertMode = true
 
@@ -55,6 +55,10 @@ externalPort = 3001
 [[ports]]
 localPort = 42649
 externalPort = 3000
+
+[[ports]]
+localPort = 44919
+externalPort = 3002
 
 [nix]
 channel = "stable-25_05"
