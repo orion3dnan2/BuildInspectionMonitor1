@@ -11,8 +11,19 @@
             </svg>
             العودة لقائمة المستخدمين
         </a>
-        <h1 class="text-xl font-bold text-slate-700">تعديل مستخدم</h1>
-        <p class="text-slate-400 text-sm">تعديل بيانات المستخدم: {{ $user->name }}</p>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-bold text-slate-700">تعديل مستخدم</h1>
+                <p class="text-slate-400 text-sm">تعديل بيانات المستخدم: {{ $user->name }}</p>
+            </div>
+            <a href="{{ route('settings.users.permissions', $user) }}" 
+               class="inline-flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+                إدارة الصلاحيات المخصصة
+            </a>
+        </div>
     </div>
 
     <div class="bg-white rounded-xl border border-slate-200 p-6">
@@ -73,34 +84,36 @@
                 </div>
             </div>
 
-            <div class="mb-6">
-                <label class="block text-sm text-slate-600 mb-3 text-right">نوع الحساب <span class="text-red-500">*</span></label>
-                <div class="flex gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="role" value="admin" {{ old('role', $user->role) == 'admin' ? 'checked' : '' }} 
-                            class="w-4 h-4 text-sky-500 border-slate-300 focus:ring-sky-400" id="role_admin">
-                        <span class="text-sm text-slate-700">مدير (جميع الصلاحيات)</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="role" value="supervisor" {{ old('role', $user->role) == 'supervisor' ? 'checked' : '' }} 
-                            class="w-4 h-4 text-sky-500 border-slate-300 focus:ring-sky-400" id="role_supervisor">
-                        <span class="text-sm text-slate-700">مشرف (صلاحيات مخصصة)</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="role" value="user" {{ old('role', $user->role) == 'user' ? 'checked' : '' }} 
-                            class="w-4 h-4 text-sky-500 border-slate-300 focus:ring-sky-400" id="role_user">
-                        <span class="text-sm text-slate-700">مستخدم (صلاحيات مخصصة)</span>
-                    </label>
-                </div>
-                @error('role')
-                    <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
-                @enderror
-            </div>
-
             @php
-                $userPermissions = old('permissions', $user->permissions ?? []);
+                $currentRoleId = old('role_id', $userRoleIds[0] ?? null);
                 $userSystemAccess = old('system_access', $user->system_access ?? []);
             @endphp
+
+            <div class="mb-6">
+                <label for="role_id" class="block text-sm text-slate-600 mb-2 text-right">الدور <span class="text-red-500">*</span></label>
+                <select name="role_id" id="role_id" required
+                    class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-1 focus:ring-sky-400 focus:border-sky-400 text-sm @error('role_id') border-red-400 @enderror">
+                    <option value="">-- اختر الدور --</option>
+                    @foreach($roles as $role)
+                        <option value="{{ $role->id }}" 
+                            {{ $currentRoleId == $role->id ? 'selected' : '' }}
+                            data-slug="{{ $role->slug }}">
+                            {{ $role->name }}
+                            @if($role->description)
+                                - {{ $role->description }}
+                            @endif
+                        </option>
+                    @endforeach
+                </select>
+                @error('role_id')
+                    <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                @enderror
+                <p class="text-xs text-slate-400 mt-2">
+                    <a href="{{ route('settings.permissions.roles') }}" class="text-sky-500 hover:text-sky-600">
+                        إدارة الأدوار والصلاحيات
+                    </a>
+                </p>
+            </div>
 
             <div class="mb-6 p-4 bg-sky-50 rounded-lg border border-sky-200" id="system_access_section">
                 <label class="block text-sm font-medium text-slate-700 mb-4">الوصول للأنظمة</label>
@@ -117,19 +130,18 @@
                 <p class="text-xs text-slate-400 mt-3">حدد الأنظمة التي يمكن للمستخدم الوصول إليها</p>
             </div>
 
-            <div class="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200" id="permissions_section">
-                <label class="block text-sm font-medium text-slate-700 mb-4">الصلاحيات المتاحة</label>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    @foreach(\App\Models\User::availablePermissions() as $key => $label)
-                    <label class="flex items-center gap-3 p-3 bg-white rounded border border-slate-200 cursor-pointer hover:border-sky-300 transition">
-                        <input type="checkbox" name="permissions[]" value="{{ $key }}" 
-                            {{ in_array($key, $userPermissions) ? 'checked' : '' }}
-                            class="w-4 h-4 text-sky-500 border-slate-300 rounded focus:ring-sky-400 permission-checkbox">
-                        <span class="text-sm text-slate-600">{{ $label }}</span>
-                    </label>
-                    @endforeach
+            <div class="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-amber-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                        <p class="text-sm text-amber-700 font-medium">ملاحظة حول الصلاحيات</p>
+                        <p class="text-xs text-amber-600 mt-1">
+                            الصلاحيات الأساسية تأتي من الدور المحدد. للتحكم بصلاحيات مخصصة لهذا المستخدم، استخدم زر "إدارة الصلاحيات المخصصة" أعلاه.
+                        </p>
+                    </div>
                 </div>
-                <p class="text-xs text-slate-400 mt-3">اختر الصلاحيات التي تريد منحها لهذا المستخدم</p>
             </div>
 
             <div class="flex items-center gap-2">
@@ -147,35 +159,25 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const adminRadio = document.getElementById('role_admin');
-    const supervisorRadio = document.getElementById('role_supervisor');
-    const userRadio = document.getElementById('role_user');
-    const permissionsSection = document.getElementById('permissions_section');
+    const roleSelect = document.getElementById('role_id');
     const systemAccessSection = document.getElementById('system_access_section');
-    const permissionCheckboxes = document.querySelectorAll('.permission-checkbox');
     const systemAccessCheckboxes = document.querySelectorAll('.system-access-checkbox');
 
     function toggleSections() {
-        if (adminRadio.checked) {
-            permissionsSection.style.opacity = '0.5';
-            permissionsSection.style.pointerEvents = 'none';
-            permissionCheckboxes.forEach(cb => cb.checked = true);
-            
+        const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+        const roleSlug = selectedOption ? selectedOption.getAttribute('data-slug') : '';
+        
+        if (roleSlug === 'admin') {
             systemAccessSection.style.opacity = '0.5';
             systemAccessSection.style.pointerEvents = 'none';
             systemAccessCheckboxes.forEach(cb => cb.checked = true);
         } else {
-            permissionsSection.style.opacity = '1';
-            permissionsSection.style.pointerEvents = 'auto';
-            
             systemAccessSection.style.opacity = '1';
             systemAccessSection.style.pointerEvents = 'auto';
         }
     }
 
-    adminRadio.addEventListener('change', toggleSections);
-    supervisorRadio.addEventListener('change', toggleSections);
-    userRadio.addEventListener('change', toggleSections);
+    roleSelect.addEventListener('change', toggleSections);
     toggleSections();
 });
 </script>

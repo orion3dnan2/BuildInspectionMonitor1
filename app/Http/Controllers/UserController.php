@@ -59,6 +59,10 @@ class UserController extends Controller
         $role = Role::find($validated['role_id']);
         $isAdmin = $role && $role->slug === 'admin';
 
+        $permissions = $isAdmin 
+            ? array_keys(User::availablePermissions()) 
+            : [];
+
         $systemAccess = $isAdmin 
             ? array_keys(User::availableSystems()) 
             : ($validated['system_access'] ?? ['block_system']);
@@ -69,6 +73,7 @@ class UserController extends Controller
             'email' => $validated['email'] ?? null,
             'password' => Hash::make($validated['password']),
             'role' => $role->slug,
+            'permissions' => $permissions,
             'system_access' => $systemAccess,
             'rank' => $validated['rank'] ?? null,
             'office' => $validated['office'] ?? null,
@@ -121,6 +126,10 @@ class UserController extends Controller
         $role = Role::find($validated['role_id']);
         $isAdmin = $role && $role->slug === 'admin';
 
+        $permissions = $isAdmin 
+            ? array_keys(User::availablePermissions()) 
+            : ($user->permissions ?? []);
+
         $systemAccess = $isAdmin 
             ? array_keys(User::availableSystems()) 
             : ($validated['system_access'] ?? ['block_system']);
@@ -130,6 +139,7 @@ class UserController extends Controller
             'username' => $validated['username'],
             'email' => $validated['email'] ?? null,
             'role' => $role->slug,
+            'permissions' => $permissions,
             'system_access' => $systemAccess,
             'rank' => $validated['rank'] ?? null,
             'office' => $validated['office'] ?? null,
