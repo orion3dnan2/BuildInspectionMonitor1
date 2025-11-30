@@ -145,7 +145,7 @@
 @if($canAccessAdminSystem)
 <div id="content-admin" class="{{ !$isAdminSection ? 'hidden' : '' }}">
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        @if(auth()->user()->canManageSettings())
+        @if(auth()->user()->can('employees.view') || auth()->user()->canManageSettings())
         <a href="{{ route('admin.employees.index') }}" class="block bg-white rounded-xl hover:shadow-lg transition p-8 text-center group border border-slate-200">
             <div class="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-5 group-hover:bg-sky-50 transition">
                 <svg class="w-8 h-8 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,7 +155,9 @@
             <h3 class="text-xl font-bold text-slate-700 mb-2">إدارة الموظفين</h3>
             <p class="text-slate-400">بيانات الموظفين والموارد البشرية</p>
         </a>
+        @endif
 
+        @if(auth()->user()->can('departments.view') || auth()->user()->canManageSettings())
         <a href="{{ route('admin.departments.index') }}" class="block bg-white rounded-xl hover:shadow-lg transition p-8 text-center group border border-slate-200">
             <div class="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-5 group-hover:bg-sky-50 transition">
                 <svg class="w-8 h-8 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,7 +167,9 @@
             <h3 class="text-xl font-bold text-slate-700 mb-2">إدارة الأقسام</h3>
             <p class="text-slate-400">الهيكل التنظيمي والإدارات</p>
         </a>
+        @endif
 
+        @if(auth()->user()->can('attendances.view') || auth()->user()->canManageSettings())
         <a href="{{ route('admin.attendances.index') }}" class="block bg-white rounded-xl hover:shadow-lg transition p-8 text-center group border border-slate-200">
             <div class="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-5 group-hover:bg-sky-50 transition">
                 <svg class="w-8 h-8 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,7 +179,9 @@
             <h3 class="text-xl font-bold text-slate-700 mb-2">سجل الحضور</h3>
             <p class="text-slate-400">تسجيل ومتابعة الحضور والانصراف</p>
         </a>
+        @endif
 
+        @if(auth()->user()->can('leave_requests.view') || auth()->user()->canManageSettings())
         <a href="{{ route('admin.leave-requests.index') }}" class="block bg-white rounded-xl hover:shadow-lg transition p-8 text-center group border border-slate-200">
             <div class="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-5 group-hover:bg-sky-50 transition">
                 <svg class="w-8 h-8 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,7 +191,9 @@
             <h3 class="text-xl font-bold text-slate-700 mb-2">طلبات الإجازات</h3>
             <p class="text-slate-400">إدارة طلبات الإجازات والموافقات</p>
         </a>
+        @endif
 
+        @if(auth()->user()->can('documents.view') || auth()->user()->canManageSettings())
         <a href="{{ route('admin.documents.index') }}" class="block bg-white rounded-xl hover:shadow-lg transition p-8 text-center group border border-slate-200">
             <div class="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-5 group-hover:bg-sky-50 transition">
                 <svg class="w-8 h-8 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,16 +213,6 @@
             <h3 class="text-xl font-bold text-slate-700 mb-2">صندوق الوارد</h3>
             <p class="text-slate-400">المستندات المحالة للمراجعة والاعتماد</p>
         </a>
-        @else
-        <div class="block bg-white rounded-xl p-8 text-center border border-slate-200 opacity-50 col-span-full">
-            <div class="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-5">
-                <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                </svg>
-            </div>
-            <h3 class="text-xl font-bold text-slate-600 mb-2">لا تملك صلاحية الوصول</h3>
-            <p class="text-slate-400">يرجى التواصل مع مدير النظام للحصول على الصلاحيات المطلوبة</p>
-        </div>
         @endif
     </div>
 </div>
