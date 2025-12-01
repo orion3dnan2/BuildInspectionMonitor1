@@ -298,17 +298,22 @@ class User extends Authenticatable
 
     public function canCreateRecords(): bool
     {
-        return $this->isAdmin() || $this->hasPermission('create_records') || $this->hasPermissionKey('records.create');
+        return $this->isAdmin() || $this->hasPermission('create_records') || $this->hasPermissionKey('records.create') || $this->hasPermissionKey('data_entry.create');
     }
 
     public function canEditRecords(): bool
     {
-        return $this->isAdmin() || $this->hasPermission('edit_records') || $this->hasPermissionKey('records.update');
+        return $this->isAdmin() || $this->hasPermission('edit_records') || $this->hasPermissionKey('records.update') || $this->hasPermissionKey('data_entry.update');
     }
 
     public function canDeleteRecords(): bool
     {
-        return $this->isAdmin() || $this->hasPermission('delete_records') || $this->hasPermissionKey('records.delete');
+        return $this->isAdmin() || $this->hasPermission('delete_records') || $this->hasPermissionKey('records.delete') || $this->hasPermissionKey('data_entry.delete');
+    }
+
+    public function canAccessDataEntry(): bool
+    {
+        return $this->isAdmin() || $this->hasPermissionKey('data_entry.view') || $this->hasPermissionKey('data_entry.create');
     }
 
     public function canImport(): bool

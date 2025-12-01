@@ -36,6 +36,7 @@ class Permission extends Model
     {
         return [
             'dashboard' => 'لوحة التحكم',
+            'data_entry' => 'إدخال البيانات',
             'records' => 'السجلات',
             'search' => 'البحث والاستعلام',
             'reports' => 'التقارير والإحصائيات',
@@ -102,6 +103,7 @@ class Permission extends Model
         
         $moduleSpecificActions = [
             'dashboard' => ['view'],
+            'data_entry' => ['view', 'create', 'update', 'delete'],
             'records' => ['view', 'create', 'update', 'delete', 'print'],
             'search' => ['view'],
             'reports' => ['view', 'print', 'export'],

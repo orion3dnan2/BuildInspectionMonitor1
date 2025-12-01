@@ -92,7 +92,7 @@
             <p class="text-slate-400">البحث في السجلات</p>
         </a>
 
-        @if(auth()->user()->canCreateRecords())
+        @if(auth()->user()->canAccessDataEntry() || auth()->user()->canCreateRecords())
         <a href="{{ route('records.create') }}" class="block bg-white rounded-xl hover:shadow-lg transition p-8 text-center group border border-slate-200">
             <div class="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-5 group-hover:bg-sky-50 transition">
                 <svg class="w-8 h-8 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
