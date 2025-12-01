@@ -14,12 +14,13 @@
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
                 <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
             </div>
             <div>
-                <h1 class="text-xl font-bold text-slate-700">إدارة المستخدمين</h1>
-                <p class="text-slate-400 text-sm">إدارة مستخدمي النظام وصلاحياتهم</p>
+                <h1 class="text-xl font-bold text-slate-700">الإعدادات</h1>
+                <p class="text-slate-400 text-sm">إدارة إعدادات النظام والبيانات الأساسية</p>
             </div>
         </div>
     </div>
@@ -59,7 +60,7 @@
                     </svg>
                 </div>
             </div>
-            <a href="{{ route('settings.users.create') }}" class="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded flex items-center gap-2 transition text-sm font-medium">
+            <a href="{{ route('settings.users.create') }}" class="bg-yellow-400 hover:bg-yellow-500 text-slate-800 px-4 py-2 rounded flex items-center gap-2 transition text-sm font-medium">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
@@ -80,9 +81,8 @@
                     <tr>
                         <th class="px-4 py-3 text-right font-medium text-slate-500">اسم المستخدم</th>
                         <th class="px-4 py-3 text-right font-medium text-slate-500">الاسم الكامل</th>
-                        <th class="px-4 py-3 text-right font-medium text-slate-500">الرتبة</th>
-                        <th class="px-4 py-3 text-right font-medium text-slate-500">المكتب</th>
-                        <th class="px-4 py-3 text-right font-medium text-slate-500">الدور</th>
+                        <th class="px-4 py-3 text-right font-medium text-slate-500">الصلاحية</th>
+                        <th class="px-4 py-3 text-right font-medium text-slate-500">الأنظمة المتاحة</th>
                         <th class="px-4 py-3 text-right font-medium text-slate-500">الإجراءات</th>
                     </tr>
                 </thead>
@@ -91,14 +91,26 @@
                     <tr class="hover:bg-slate-50 user-row" data-name="{{ strtolower($user->name) }}" data-username="{{ strtolower($user->username) }}">
                         <td class="px-4 py-3 text-slate-600">{{ $user->username }}</td>
                         <td class="px-4 py-3 font-medium text-slate-700">{{ $user->name }}</td>
-                        <td class="px-4 py-3 text-slate-600">{{ $user->rank ?? '-' }}</td>
-                        <td class="px-4 py-3 text-slate-600">{{ $user->office ?? '-' }}</td>
                         <td class="px-4 py-3">
                             <span class="px-3 py-1 text-xs rounded-full inline-flex items-center gap-1
                                 @if($user->role == 'admin') bg-sky-100 text-sky-700
-                                @else bg-amber-100 text-amber-700 @endif">
+                                @elseif($user->role == 'supervisor') bg-amber-100 text-amber-700
+                                @else bg-slate-100 text-slate-600 @endif">
                                 {{ $user->role_name }}
                             </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            @if($user->role == 'admin')
+                                <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-700">جميع الأنظمة</span>
+                            @else
+                                <div class="flex flex-wrap gap-1">
+                                    @forelse($user->system_access_labels as $label)
+                                        <span class="px-2 py-1 text-xs rounded bg-purple-100 text-purple-700">{{ $label }}</span>
+                                    @empty
+                                        <span class="text-xs text-slate-400">لا يوجد</span>
+                                    @endforelse
+                                </div>
+                            @endif
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex items-center gap-2">
@@ -125,7 +137,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-12 text-center text-slate-400">لا يوجد مستخدمين</td>
+                        <td colspan="5" class="px-4 py-12 text-center text-slate-400">لا يوجد مستخدمين</td>
                     </tr>
                     @endforelse
                 </tbody>

@@ -1,42 +1,37 @@
 # Records Management System (نظام إدارة الرقابة والتفتيش)
 
-A simplified Laravel-based Records Management System for inspection and monitoring teams.
+A complete Laravel-based Records Management System for inspection and monitoring teams.
 
 ## Overview
 
-This system allows officers to record and manage inspection records with full CRUD operations, two-tier role-based access control (admin and inspector), advanced search, and a modern Arabic RTL user interface.
+This system allows officers to record and manage inspection records with full CRUD operations, three-tier role-based access control, advanced search, and a modern Arabic RTL user interface.
 
 ## Stack
 
 - **Backend**: Laravel 12 with PHP 8.2+
 - **Database**: PostgreSQL (Neon)
 - **Frontend**: Blade templates with TailwindCSS
-- **Authentication**: Laravel session-based auth
+- **Authentication**: Laravel session-based auth + Sanctum for API
 - **Session Driver**: File-based sessions
 - **Excel Import**: PhpSpreadsheet library
 
 ## Features
 
 ### Core Features
-- Two-tier role-based access control (Admin/Inspector)
+- Three-tier role-based access control (Admin/Supervisor/User)
 - Full CRUD for inspection records
 - Advanced search with multiple filters (name, military ID, governorate, rank, station, date range)
 - Dashboard with statistics (total, today, month, year records)
 - Activity logging for all operations
 - Excel import functionality
 - Print-friendly report pages
+- Home page with Block System and Administrative System tabs
+- Dark/Light mode toggle with localStorage persistence
 
 ### User Roles
 - **Admin (مدير)**: Full access to all features including user management and settings
-- **Inspector (مفتش)**: Can view, search, create records, and generate reports
-
-### User Fields
-- Name (الاسم الكامل)
-- Username (اسم المستخدم)
-- Password (كلمة المرور)
-- Role (الدور) - admin or inspector
-- Rank (الرتبة)
-- Office (المكتب/الجهة)
+- **Supervisor (مشرف)**: All features except user management (can manage stations, ports, import data)
+- **User (مستخدم)**: View, search, and generate reports only
 
 ### Record Fields
 - Record Number (رقم الصادر)
@@ -50,10 +45,63 @@ This system allows officers to record and manage inspection records with full CR
 - Notes (ملاحظات)
 - Round Date (تاريخ الجولة)
 
-### Settings (Admin Only)
+### Administrative System (النظام الإداري)
+
+#### HR Module (الموارد البشرية)
+- **Departments (الأقسام)**: Full CRUD for organizational units with parent/child hierarchy
+- **Employees (الموظفين)**: Complete employee management with contact info, hire dates, leave balances
+- **Attendance (الحضور)**: Daily check-in/out tracking with bulk entry, date/status filtering, and attendance reports
+- **Leave Requests (طلبات الإجازات)**: Leave request workflow with approval/rejection, balance tracking, and reason documentation
+
+#### Document Workflow System (نظام المراسلات)
+- **Document Types**: Internal memo, external letter, circular, decision, report
+- **Priority Levels**: Normal, urgent, very urgent
+- **Workflow Stages**: Draft → Pending Review → Pending Approval → Approved/Rejected/Needs Modification
+- **Electronic Signatures**: Canvas-based signature capture for manager approval
+- **File Attachments**: Word (.doc, .docx) and PDF upload support
+- **Inbox**: View documents pending user action
+- **My Documents**: Track created documents and their workflow status
+- **Print View**: Print-friendly document layout with signature
+
+### Notification System (نظام الإشعارات)
+- **Real-time Notifications**: Bell icon in sidebar with unread count badge
+- **Notification Types**: 
+  - Document workflow: submitted, sent_for_review, sent_to_manager, approved, rejected, needs_modification
+- **Inbox Badge Counts**: Dynamic counts on sidebar inbox links for pending items
+- **Notification Dropdown**: Click bell to see latest 5 notifications with timestamps
+- **Mark as Read**: Individual or bulk mark all as read
+- **Auto Refresh**: Counts refresh every 30 seconds via JavaScript polling
+- **Arabic Localization**: Full Arabic notification messages
+
+### Settings (الإعدادات)
+- **Global Access**: Settings section available across both Block System and Administrative System
 - **User Management**: Create, edit, delete users with role assignments
 - **Station Management**: Manage stations/police stations
 - **Port Management**: Manage entry ports
+- **Role & Permission Management**: Database-driven permissions with custom roles
+
+### Permissions System (نظام الصلاحيات)
+- **Database-Driven**: All permissions stored in database for easy management
+- **Role Management**: Create/edit/delete custom roles with specific permissions
+- **Default Roles**: Admin (full access), Supervisor (limited admin), User (view only)
+- **Per-User Overrides**: Grant or deny specific permissions to individual users
+- **Module-Based Permissions**: Permissions organized by system module (records, books, documents, etc.)
+- **Action Types**: View, create, update, delete, approve, reject, import, export, print, manage
+- **Permission Sync**: Auto-sync permissions from system routes
+- **Permission Middleware**: Route-level access control via `permission:key` middleware
+- **UI Management**: Full admin interface for role and permission management in Settings
+
+### Correspondences Module (المرسلات والكتب)
+- **Document Types**: Incoming (وارد) and Outgoing (صادر)
+- **Auto-Numbering**: Automatic sequential numbering by type and year (IN-2025-0001, OUT-2025-0001)
+- **Status Tracking**: New → Reviewed → Completed → Archived
+- **File Upload**: Support for PDF, Word, images, and other file types (up to 20MB)
+- **File Preview**: In-browser preview for PDF and images, download for Word files
+- **Quick Import**: Upload a file directly from device to create a new correspondence
+- **Advanced Search**: Multi-criteria search by document number, title, type, department, date range, status
+- **Sender/Receiver Tracking**: Track originating and receiving departments
+- **Audit Trail**: Track who created and last updated each correspondence
+- **Soft Deletes**: Deleted correspondences can be recovered
 
 ### UI Features
 - Modern, clean government-style admin panel
@@ -61,6 +109,9 @@ This system allows officers to record and manage inspection records with full CR
 - Responsive layout with sidebar navigation
 - Professional forms with validation messages
 - Data tables with pagination and search
+- Quick login cards on login page for testing
+- Tabbed home page (Block System / Administrative System)
+- Notification bell with dropdown in sidebar footer
 
 ## Project Structure
 
@@ -78,18 +129,41 @@ app/
 │   │   ├── SettingController.php
 │   │   ├── UserController.php
 │   │   ├── StationController.php
-│   │   └── PortController.php
+│   │   ├── PortController.php
+│   │   ├── NotificationController.php
+│   │   ├── PermissionController.php
+│   │   └── Admin/
+│   │       ├── DepartmentController.php
+│   │       ├── EmployeeController.php
+│   │       ├── AttendanceController.php
+│   │       ├── LeaveRequestController.php
+│   │       ├── DocumentController.php
+│   │       └── CorrespondenceController.php
 │   ├── Middleware/
-│   │   └── AdminMiddleware.php
+│   │   ├── AdminMiddleware.php
+│   │   ├── RoleMiddleware.php
+│   │   └── PermissionMiddleware.php
 │   └── Requests/
 ├── Models/
 │   ├── User.php
 │   ├── Record.php
 │   ├── Station.php
 │   ├── Port.php
-│   └── Log.php
+│   ├── Log.php
+│   ├── Department.php
+│   ├── Employee.php
+│   ├── Attendance.php
+│   ├── LeaveRequest.php
+│   ├── Document.php
+│   ├── DocumentWorkflow.php
+│   ├── Signature.php
+│   ├── Notification.php
+│   ├── Permission.php
+│   ├── Role.php
+│   └── Correspondence.php
 ├── Policies/
-│   └── RecordPolicy.php
+│   ├── RecordPolicy.php
+│   └── UserPolicy.php
 └── Providers/
     └── AppServiceProvider.php
 
@@ -113,11 +187,48 @@ resources/views/
 │   └── print.blade.php
 ├── import/
 │   └── index.blade.php
-└── settings/
-    ├── index.blade.php
-    ├── users/
-    ├── stations/
-    └── ports/
+├── settings/
+│   ├── index.blade.php
+│   ├── users/
+│   ├── stations/
+│   └── ports/
+└── admin/
+    ├── departments/
+    │   ├── index.blade.php
+    │   ├── create.blade.php
+    │   ├── show.blade.php
+    │   └── edit.blade.php
+    ├── employees/
+    │   ├── index.blade.php
+    │   ├── create.blade.php
+    │   ├── show.blade.php
+    │   └── edit.blade.php
+    ├── attendances/
+    │   ├── index.blade.php
+    │   ├── create.blade.php
+    │   ├── edit.blade.php
+    │   ├── bulk-create.blade.php
+    │   └── report.blade.php
+    ├── leave-requests/
+    │   ├── index.blade.php
+    │   ├── create.blade.php
+    │   ├── show.blade.php
+    │   └── edit.blade.php
+    ├── documents/
+    │   ├── index.blade.php
+    │   ├── create.blade.php
+    │   ├── show.blade.php
+    │   ├── edit.blade.php
+    │   ├── inbox.blade.php
+    │   ├── my-documents.blade.php
+    │   └── print.blade.php
+    └── correspondences/
+        ├── index.blade.php
+        ├── create.blade.php
+        ├── show.blade.php
+        ├── edit.blade.php
+        ├── import.blade.php
+        └── search.blade.php
 
 routes/
 ├── web.php
@@ -130,11 +241,11 @@ routes/
   - Username: `admin`
   - Password: `Admin123!`
 
-- **Inspector Account**:
+- **Supervisor Account**:
   - Username: `supervisor`
   - Password: `123456`
 
-- **Inspector Account**:
+- **User Account**:
   - Username: `user1`
   - Password: `123456`
 
@@ -150,13 +261,23 @@ php artisan serve --host=0.0.0.0 --port=5000 --no-reload
 ## Database
 
 Using PostgreSQL (Neon) with the following tables:
-- `users` - System users with roles (admin, inspector)
+- `users` - System users with roles (admin, supervisor, user)
 - `records` - Inspection records with soft deletes
 - `stations` - Station/Police station management
 - `ports` - Ports/Entry points management
 - `logs` - Activity tracking
 - `sessions` - Session management
 - `cache` - Application cache
+- `jobs` - Queue jobs
+- `departments` - Organizational departments with hierarchy
+- `employees` - Employee records with leave balances
+- `attendances` - Daily attendance records
+- `leave_requests` - Leave request workflow
+- `documents` - Document management with workflow states
+- `document_workflows` - Document workflow history and signatures
+- `signatures` - Electronic signatures with hash verification
+- `notifications` - User notifications for workflow events
+- `correspondences` - Incoming and outgoing correspondence documents
 
 ## Environment Variables
 
@@ -168,11 +289,13 @@ The `bootstrap/app.php` file ensures these environment variables are loaded into
 
 ## Development Notes
 
+- Policies control authorization for records and users
 - Activity logging tracks all CRUD operations
 - Soft deletes enabled for records
 - Session driver set to `file` for simplicity
+- Quick login cards on login page show credentials for easy testing
 - Excel import uses PhpSpreadsheet library
-- `AdminMiddleware` restricts admin-only routes
+- Three middleware for role control: `admin`, `role:admin,supervisor`
 
 ## Technical Notes
 
@@ -183,15 +306,7 @@ Laravel's `ServeCommand` filters environment variables when spawning child proce
 Sessions are stored in files (`storage/framework/sessions/`) rather than the database to avoid potential connection issues during development.
 
 ### Role-Based Access Control
-The system uses a simple two-role system:
-- `admin` - Full access to all features including settings and user management
-- `inspector` - Can view, search, create records, and generate reports
-- `AdminMiddleware` restricts access to admin-only routes (settings, user management)
-
-## Recent Changes (December 2025)
-
-- Simplified role system from 3 roles (admin/supervisor/user) to 2 roles (admin/inspector)
-- Removed complex permission system with 68 permissions across 15 modules
-- Simplified user model with fields: name, username, password, role, rank, office
-- Removed administrative system modules (departments, employees, attendance, leave requests, documents, correspondences)
-- Streamlined routes and middleware
+The system uses a combination of middleware and policies:
+- `AdminMiddleware`: Restricts access to admin-only routes
+- `RoleMiddleware`: Allows multiple roles (e.g., `role:admin,supervisor`)
+- `RecordPolicy` and `UserPolicy`: Fine-grained authorization checks

@@ -1,10 +1,16 @@
 <?php
 
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\SystemAccessMiddleware;
+use App\Http\Middleware\PermissionMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Cookie\Middleware\EncryptCookies;
 
+// Load Replit database environment variables before Laravel boots
 $dbVars = ['DATABASE_URL', 'PGHOST', 'PGPORT', 'PGUSER', 'PGPASSWORD', 'PGDATABASE'];
 foreach ($dbVars as $var) {
     $value = getenv($var);
@@ -25,9 +31,14 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => AdminMiddleware::class,
+            'role' => RoleMiddleware::class,
+            'system' => SystemAccessMiddleware::class,
+            'permission' => PermissionMiddleware::class,
         ]);
         
         $middleware->trustProxies(at: '*');
+        
+        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
