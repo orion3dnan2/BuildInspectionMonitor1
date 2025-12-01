@@ -4,7 +4,7 @@ use Illuminate\Support\Str;
 
 return [
 
-    'driver' => env('SESSION_DRIVER', 'cookie'),
+    'driver' => env('SESSION_DRIVER', 'file'),
 
     'lifetime' => (int) env('SESSION_LIFETIME', 120),
 
@@ -24,19 +24,19 @@ return [
 
     'cookie' => env(
         'SESSION_COOKIE',
-        Str::slug((string) env('APP_NAME', 'laravel')).'-session'
+        Str::slug((string) env('APP_NAME', 'laravel'), '_').'_session'
     ),
 
     'path' => env('SESSION_PATH', '/'),
 
     'domain' => env('SESSION_DOMAIN'),
 
-    'secure' => true,
+    'secure' => env('SESSION_SECURE_COOKIE', true),
 
     'http_only' => env('SESSION_HTTP_ONLY', true),
 
-    'same_site' => 'none',
+    'same_site' => env('SESSION_SAME_SITE', 'none'),
 
-    'partitioned' => true,
+    'partitioned' => env('SESSION_PARTITIONED', true),
 
 ];
