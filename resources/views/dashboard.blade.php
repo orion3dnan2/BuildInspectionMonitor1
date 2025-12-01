@@ -73,7 +73,6 @@
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    @if(auth()->user()->canCreateRecords())
     <a href="{{ route('records.create') }}" class="bg-white rounded-xl border border-slate-200 p-6 flex items-center gap-5 hover:border-sky-300 hover:bg-sky-50 transition group">
         <div class="w-16 h-16 bg-slate-100 group-hover:bg-sky-100 rounded-xl flex items-center justify-center transition">
             <svg class="w-8 h-8 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,7 +81,6 @@
         </div>
         <span class="text-lg font-medium text-slate-700">إدخال بيانات جديدة</span>
     </a>
-    @endif
 
     <a href="{{ route('search.index') }}" class="bg-white rounded-xl border border-slate-200 p-6 flex items-center gap-5 hover:border-sky-300 hover:bg-sky-50 transition group">
         <div class="w-16 h-16 bg-slate-100 group-hover:bg-sky-100 rounded-xl flex items-center justify-center transition">
