@@ -19,17 +19,17 @@ class RecordPolicy
 
     public function create(User $user): bool
     {
-        return true;
+        return $user->canCreateRecords();
     }
 
     public function update(User $user, Record $record): bool
     {
-        return true;
+        return $user->canEditRecords();
     }
 
     public function delete(User $user, Record $record): bool
     {
-        return $user->isAdmin();
+        return $user->canDeleteRecords();
     }
 
     public function restore(User $user, Record $record): bool
