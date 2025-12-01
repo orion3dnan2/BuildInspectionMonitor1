@@ -43,9 +43,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     
-    Route::middleware('role:admin,supervisor')->group(function () {
-        Route::resource('records', RecordController::class);
-    });
+    Route::get('/records', [RecordController::class, 'index'])->name('records.index')->middleware('permission:records.view,data_entry.view');
+    Route::get('/records/create', [RecordController::class, 'create'])->name('records.create')->middleware('permission:records.create,data_entry.create');
+    Route::post('/records', [RecordController::class, 'store'])->name('records.store')->middleware('permission:records.create,data_entry.create');
+    Route::get('/records/{record}', [RecordController::class, 'show'])->name('records.show')->middleware('permission:records.view,data_entry.view');
+    Route::get('/records/{record}/edit', [RecordController::class, 'edit'])->name('records.edit')->middleware('permission:records.update,data_entry.update');
+    Route::put('/records/{record}', [RecordController::class, 'update'])->name('records.update')->middleware('permission:records.update,data_entry.update');
+    Route::delete('/records/{record}', [RecordController::class, 'destroy'])->name('records.destroy')->middleware('permission:records.delete,data_entry.delete');
     
     Route::get('/search', [SearchController::class, 'index'])->name('search.index');
     Route::get('/search/{record}', [SearchController::class, 'show'])->name('search.show');
