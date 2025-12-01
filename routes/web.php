@@ -43,9 +43,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     
-    Route::middleware('role:admin,supervisor')->group(function () {
-        Route::resource('records', RecordController::class);
-    });
+    Route::get('/records', [RecordController::class, 'index'])->name('records.index')->middleware('permission:records.view');
+    Route::get('/records/create', [RecordController::class, 'create'])->name('records.create')->middleware('permission:records.create');
+    Route::post('/records', [RecordController::class, 'store'])->name('records.store')->middleware('permission:records.create');
+    Route::get('/records/{record}', [RecordController::class, 'show'])->name('records.show')->middleware('permission:records.view');
+    Route::get('/records/{record}/edit', [RecordController::class, 'edit'])->name('records.edit')->middleware('permission:records.update');
+    Route::put('/records/{record}', [RecordController::class, 'update'])->name('records.update')->middleware('permission:records.update');
+    Route::delete('/records/{record}', [RecordController::class, 'destroy'])->name('records.destroy')->middleware('permission:records.delete');
     
     Route::get('/search', [SearchController::class, 'index'])->name('search.index');
     Route::get('/search/{record}', [SearchController::class, 'show'])->name('search.show');
@@ -53,27 +57,25 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/print', [ReportController::class, 'print'])->name('reports.print');
     
-    Route::middleware('role:admin,supervisor')->group(function () {
-        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
-        
-        Route::get('/settings/stations', [StationController::class, 'index'])->name('settings.stations.index');
-        Route::get('/settings/stations/create', [StationController::class, 'create'])->name('settings.stations.create');
-        Route::post('/settings/stations', [StationController::class, 'store'])->name('settings.stations.store');
-        Route::get('/settings/stations/{station}/edit', [StationController::class, 'edit'])->name('settings.stations.edit');
-        Route::put('/settings/stations/{station}', [StationController::class, 'update'])->name('settings.stations.update');
-        Route::delete('/settings/stations/{station}', [StationController::class, 'destroy'])->name('settings.stations.destroy');
-        
-        Route::get('/settings/ports', [PortController::class, 'index'])->name('settings.ports.index');
-        Route::get('/settings/ports/create', [PortController::class, 'create'])->name('settings.ports.create');
-        Route::post('/settings/ports', [PortController::class, 'store'])->name('settings.ports.store');
-        Route::get('/settings/ports/{port}/edit', [PortController::class, 'edit'])->name('settings.ports.edit');
-        Route::put('/settings/ports/{port}', [PortController::class, 'update'])->name('settings.ports.update');
-        Route::delete('/settings/ports/{port}', [PortController::class, 'destroy'])->name('settings.ports.destroy');
-        
-        Route::get('/import', [ImportController::class, 'index'])->name('import.index');
-        Route::post('/import', [ImportController::class, 'store'])->name('import.store');
-        Route::get('/import/template', [ImportController::class, 'template'])->name('import.template');
-    });
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index')->middleware('permission:settings.view');
+    
+    Route::get('/settings/stations', [StationController::class, 'index'])->name('settings.stations.index')->middleware('permission:stations.view');
+    Route::get('/settings/stations/create', [StationController::class, 'create'])->name('settings.stations.create')->middleware('permission:stations.create');
+    Route::post('/settings/stations', [StationController::class, 'store'])->name('settings.stations.store')->middleware('permission:stations.create');
+    Route::get('/settings/stations/{station}/edit', [StationController::class, 'edit'])->name('settings.stations.edit')->middleware('permission:stations.update');
+    Route::put('/settings/stations/{station}', [StationController::class, 'update'])->name('settings.stations.update')->middleware('permission:stations.update');
+    Route::delete('/settings/stations/{station}', [StationController::class, 'destroy'])->name('settings.stations.destroy')->middleware('permission:stations.delete');
+    
+    Route::get('/settings/ports', [PortController::class, 'index'])->name('settings.ports.index')->middleware('permission:ports.view');
+    Route::get('/settings/ports/create', [PortController::class, 'create'])->name('settings.ports.create')->middleware('permission:ports.create');
+    Route::post('/settings/ports', [PortController::class, 'store'])->name('settings.ports.store')->middleware('permission:ports.create');
+    Route::get('/settings/ports/{port}/edit', [PortController::class, 'edit'])->name('settings.ports.edit')->middleware('permission:ports.update');
+    Route::put('/settings/ports/{port}', [PortController::class, 'update'])->name('settings.ports.update')->middleware('permission:ports.update');
+    Route::delete('/settings/ports/{port}', [PortController::class, 'destroy'])->name('settings.ports.destroy')->middleware('permission:ports.delete');
+    
+    Route::get('/import', [ImportController::class, 'index'])->name('import.index')->middleware('permission:import.view');
+    Route::post('/import', [ImportController::class, 'store'])->name('import.store')->middleware('permission:import.import');
+    Route::get('/import/template', [ImportController::class, 'template'])->name('import.template')->middleware('permission:import.view');
     
     Route::get('/forbidden', function () {
         return view('errors.forbidden');
