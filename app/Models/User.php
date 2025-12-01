@@ -288,47 +288,47 @@ class User extends Authenticatable
 
     public function canManageUsers(): bool
     {
-        return $this->isAdmin() || $this->hasPermission('manage_users');
+        return $this->isAdmin() || $this->hasPermission('manage_users') || $this->hasPermissionKey('users.manage');
     }
 
     public function canManageSettings(): bool
     {
-        return $this->isAdmin() || $this->hasPermission('manage_settings');
+        return $this->isAdmin() || $this->hasPermission('manage_settings') || $this->hasPermissionKey('settings.manage');
     }
 
     public function canCreateRecords(): bool
     {
-        return $this->isAdmin() || $this->hasPermission('create_records');
+        return $this->isAdmin() || $this->hasPermission('create_records') || $this->hasPermissionKey('records.create');
     }
 
     public function canEditRecords(): bool
     {
-        return $this->isAdmin() || $this->hasPermission('edit_records');
+        return $this->isAdmin() || $this->hasPermission('edit_records') || $this->hasPermissionKey('records.update');
     }
 
     public function canDeleteRecords(): bool
     {
-        return $this->isAdmin() || $this->hasPermission('delete_records');
+        return $this->isAdmin() || $this->hasPermission('delete_records') || $this->hasPermissionKey('records.delete');
     }
 
     public function canImport(): bool
     {
-        return $this->isAdmin() || $this->hasPermission('import_data');
+        return $this->isAdmin() || $this->hasPermission('import_data') || $this->hasPermissionKey('import.import');
     }
 
     public function canViewRecords(): bool
     {
-        return true;
+        return $this->hasPermissionKey('records.view') || $this->hasPermission('view_records') || true;
     }
 
     public function canSearch(): bool
     {
-        return true;
+        return $this->hasPermissionKey('search.view') || true;
     }
 
     public function canViewReports(): bool
     {
-        return true;
+        return $this->hasPermissionKey('reports.view') || true;
     }
 
     public function getRoleNameAttribute(): string
