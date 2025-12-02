@@ -6,7 +6,7 @@
 <div class="flex items-center justify-between mb-6">
     <div>
         <h1 class="text-2xl font-bold text-gray-800">تفاصيل السجل</h1>
-        <p class="text-gray-600">رقم الصادر: {{ $record->record_number }}</p>
+        <p class="text-gray-600">رقم التتبع: <span class="text-sky-600 font-mono">{{ $record->tracking_number ?? '-' }}</span></p>
     </div>
     <div class="flex gap-2">
         @can('update', $record)
@@ -19,12 +19,16 @@
 <div class="bg-white rounded-xl shadow-sm p-6">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div>
+            <p class="text-sm text-gray-500">رقم التتبع</p>
+            <p class="font-medium text-sky-600 font-mono">{{ $record->tracking_number ?? '-' }}</p>
+        </div>
+        <div>
             <p class="text-sm text-gray-500">رقم الصادر</p>
             <p class="font-medium text-gray-800">{{ $record->record_number }}</p>
         </div>
         <div>
             <p class="text-sm text-gray-500">الرقم العسكري</p>
-            <p class="font-medium text-gray-800">{{ $record->military_id }}</p>
+            <p class="font-medium text-gray-800">{{ $record->military_id ?? '-' }}</p>
         </div>
         <div>
             <p class="text-sm text-gray-500">تاريخ الجولة</p>

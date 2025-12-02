@@ -29,16 +29,6 @@ class Record extends Model
         'created_by',
     ];
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($record) {
-            $lastId = static::withTrashed()->max('id') ?? 0;
-            $nextId = $lastId + 1;
-            $record->tracking_number = 'TRK-' . date('Y') . '-' . str_pad($nextId, 6, '0', STR_PAD_LEFT);
-        });
-    }
 
     protected function casts(): array
     {

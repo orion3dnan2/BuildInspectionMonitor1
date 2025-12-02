@@ -46,7 +46,7 @@ class RecordController extends Controller
         $this->authorize('create', Record::class);
 
         $validated = $request->validate([
-            'record_number' => 'required|string|unique:records',
+            'record_number' => 'required|string',
             'military_id' => 'nullable|string',
             'first_name' => 'required|string|max:255',
             'second_name' => 'nullable|string|max:255',
@@ -62,14 +62,15 @@ class RecordController extends Controller
         ]);
 
         $validated['created_by'] = auth()->id();
+        $validated['tracking_number'] = $this->generateTrackingNumber();
 
         $record = Record::create($validated);
 
-        Log::record('create_record', 'إضافة سجل جديد: ' . $record->record_number);
+        Log::record('create_record', 'إضافة سجل جديد: ' . $record->record_number . ' - رقم التتبع: ' . $record->tracking_number);
 
         return redirect()
             ->route('records.index')
-            ->with('success', 'تم إضافة السجل بنجاح');
+            ->with('success', 'تم إضافة السجل بنجاح - رقم التتبع: ' . $record->tracking_number);
     }
 
     public function show(Record $record)
@@ -96,7 +97,7 @@ class RecordController extends Controller
         $this->authorize('update', $record);
 
         $validated = $request->validate([
-            'record_number' => 'required|string|unique:records,record_number,' . $record->id,
+            'record_number' => 'required|string',
             'military_id' => 'nullable|string',
             'first_name' => 'required|string|max:255',
             'second_name' => 'nullable|string|max:255',
@@ -113,7 +114,7 @@ class RecordController extends Controller
 
         $record->update($validated);
 
-        Log::record('update_record', 'تعديل سجل: ' . $record->record_number);
+        Log::record('update_record', 'تعديل سجل: ' . $record->record_number . ' - رقم التتبع: ' . $record->tracking_number);
 
         return redirect()
             ->route('records.index')
@@ -124,12 +125,31 @@ class RecordController extends Controller
     {
         $this->authorize('delete', $record);
 
-        Log::record('delete_record', 'حذف سجل: ' . $record->record_number);
+        Log::record('delete_record', 'حذف سجل: ' . $record->record_number . ' - رقم التتبع: ' . $record->tracking_number);
         $record->delete();
 
         return redirect()
             ->route('records.index')
             ->with('success', 'تم حذف السجل بنجاح');
+    }
+
+    private function generateTrackingNumber(): string
+    {
+        $year = date('Y');
+        $prefix = 'TRK';
+        
+        $lastRecord = Record::whereYear('created_at', $year)
+            ->whereNotNull('tracking_number')
+            ->orderByRaw("CAST(SUBSTRING(tracking_number FROM '[0-9]+$') AS INTEGER) DESC")
+            ->first();
+        
+        if ($lastRecord && preg_match('/(\d+)$/', $lastRecord->tracking_number, $matches)) {
+            $nextNumber = intval($matches[1]) + 1;
+        } else {
+            $nextNumber = 1;
+        }
+        
+        return $prefix . '-' . $year . '-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
 
     private function getGovernorates(): array
