@@ -154,22 +154,16 @@ class RecordController extends Controller
 
     private function getGovernorates(): array
     {
-        return [
-            'العاصمة', 'حولي', 'الفروانية', 'الجهراء', 'الأحمدي', 'مبارك الكبير'
-        ];
+        return config('system.governorates', []);
     }
 
     private function getRanks(): array
     {
-        return [
-            'ملازم', 'ملازم أول', 'نقيب', 'رائد', 'مقدم', 'عقيد', 'عميد', 'لواء'
-        ];
+        return config('system.ranks', []);
     }
 
     private function getActionTypes(): array
     {
-        return [
-            'تفتيش', 'رقابة', 'متابعة', 'زيارة ميدانية', 'تحقيق', 'أخرى'
-        ];
+        return config('system.action_types', []);
     }
 }
