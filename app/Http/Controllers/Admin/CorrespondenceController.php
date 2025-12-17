@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Correspondence;
+use App\Models\Signature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -294,5 +295,45 @@ class CorrespondenceController extends Controller
     public function searchForm()
     {
         return view('admin.correspondences.search', ['searched' => false, 'correspondences' => collect()]);
+    }
+
+    public function viewer(Correspondence $correspondence)
+    {
+        $correspondence->load(['signatures.user', 'creator', 'updater']);
+        return view('admin.correspondences.viewer', compact('correspondence'));
+    }
+
+    public function sign(Request $request, Correspondence $correspondence)
+    {
+        $validated = $request->validate([
+            'signature_data' => 'required|string',
+            'action' => 'required|in:approved,rejected,reviewed',
+            'comments' => 'nullable|string|max:500',
+        ]);
+
+        $signature = Signature::create([
+            'user_id' => Auth::id(),
+            'signable_type' => Correspondence::class,
+            'signable_id' => $correspondence->id,
+            'signature_data' => $validated['signature_data'],
+            'signature_hash' => Signature::generateHash(
+                $validated['signature_data'],
+                Auth::id(),
+                Correspondence::class,
+                $correspondence->id
+            ),
+            'action' => $validated['action'],
+            'comments' => $validated['comments'],
+            'ip_address' => $request->ip(),
+        ]);
+
+        if ($validated['action'] === 'approved') {
+            $correspondence->update(['status' => 'completed']);
+        } elseif ($validated['action'] === 'reviewed') {
+            $correspondence->update(['status' => 'reviewed']);
+        }
+
+        return redirect()->route('admin.correspondences.viewer', $correspondence)
+            ->with('success', 'تم إضافة التوقيع بنجاح');
     }
 }

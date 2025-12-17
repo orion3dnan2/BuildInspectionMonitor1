@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Correspondence extends Model
 {
@@ -45,6 +46,11 @@ class Correspondence extends Model
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function signatures(): MorphMany
+    {
+        return $this->morphMany(Signature::class, 'signable');
     }
 
     public function getTypeNameAttribute(): string
