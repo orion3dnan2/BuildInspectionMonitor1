@@ -8,21 +8,23 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('notifications', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('type');
-            $table->string('title');
-            $table->text('message');
-            $table->string('notifiable_type')->nullable();
-            $table->unsignedBigInteger('notifiable_id')->nullable();
-            $table->json('data')->nullable();
-            $table->timestamp('read_at')->nullable();
-            $table->timestamps();
-            
-            $table->index(['user_id', 'read_at']);
-            $table->index(['notifiable_type', 'notifiable_id']);
-        });
+        if (!Schema::hasTable('notifications')) {
+            Schema::create('notifications', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
+                $table->string('type');
+                $table->string('title');
+                $table->text('message');
+                $table->string('notifiable_type')->nullable();
+                $table->unsignedBigInteger('notifiable_id')->nullable();
+                $table->json('data')->nullable();
+                $table->timestamp('read_at')->nullable();
+                $table->timestamps();
+                
+                $table->index(['user_id', 'read_at']);
+                $table->index(['notifiable_type', 'notifiable_id']);
+            });
+        }
     }
 
     public function down(): void

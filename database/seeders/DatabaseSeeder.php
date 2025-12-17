@@ -5,6 +5,9 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\Station;
 use App\Models\Port;
+use App\Models\Department;
+use App\Models\Role;
+use App\Models\Permission;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -12,7 +15,11 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::firstOrCreate(
+        Permission::syncPermissions();
+        Role::syncDefaultRoles();
+        Role::assignDefaultPermissions();
+
+        $admin = User::firstOrCreate(
             ['username' => 'admin'],
             [
                 'name' => 'مدير النظام',
@@ -21,10 +28,12 @@ class DatabaseSeeder extends Seeder
                 'role' => 'admin',
                 'rank' => 'مدير',
                 'office' => 'الإدارة العامة',
+                'system_access' => ['block_system', 'admin_system'],
+                'permissions' => [],
             ]
         );
 
-        User::firstOrCreate(
+        $supervisor = User::firstOrCreate(
             ['username' => 'supervisor'],
             [
                 'name' => 'المشرف',
@@ -33,10 +42,12 @@ class DatabaseSeeder extends Seeder
                 'role' => 'supervisor',
                 'rank' => 'مشرف',
                 'office' => 'قسم الإشراف',
+                'system_access' => ['block_system', 'admin_system'],
+                'permissions' => ['create_records', 'edit_records', 'import_data'],
             ]
         );
 
-        User::firstOrCreate(
+        $user1 = User::firstOrCreate(
             ['username' => 'user1'],
             [
                 'name' => 'مستخدم عادي',
@@ -45,8 +56,18 @@ class DatabaseSeeder extends Seeder
                 'role' => 'user',
                 'rank' => 'موظف',
                 'office' => 'قسم المتابعة',
+                'system_access' => ['block_system'],
+                'permissions' => [],
             ]
         );
+
+        $adminRole = Role::where('slug', 'admin')->first();
+        $supervisorRole = Role::where('slug', 'supervisor')->first();
+        $userRole = Role::where('slug', 'user')->first();
+
+        if ($adminRole) $admin->roles()->syncWithoutDetaching([$adminRole->id]);
+        if ($supervisorRole) $supervisor->roles()->syncWithoutDetaching([$supervisorRole->id]);
+        if ($userRole) $user1->roles()->syncWithoutDetaching([$userRole->id]);
 
         $stations = [
             ['name' => 'مخفر العاصمة', 'governorate' => 'العاصمة'],
@@ -71,6 +92,18 @@ class DatabaseSeeder extends Seeder
 
         foreach ($ports as $port) {
             Port::firstOrCreate(['name' => $port['name']], $port);
+        }
+
+        $departments = [
+            ['name' => 'الإدارة العامة', 'code' => 'GM', 'description' => 'الإدارة العليا للنظام', 'manager_id' => $admin->id],
+            ['name' => 'الشؤون الإدارية', 'code' => 'ADM', 'description' => 'قسم الشؤون الإدارية'],
+            ['name' => 'الموارد البشرية', 'code' => 'HR', 'description' => 'قسم الموارد البشرية'],
+            ['name' => 'الشؤون المالية', 'code' => 'FIN', 'description' => 'قسم الشؤون المالية'],
+            ['name' => 'تقنية المعلومات', 'code' => 'IT', 'description' => 'قسم تقنية المعلومات'],
+        ];
+
+        foreach ($departments as $department) {
+            Department::firstOrCreate(['code' => $department['code']], $department);
         }
     }
 }

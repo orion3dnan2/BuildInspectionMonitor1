@@ -9,14 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->json('system_access')->nullable()->after('permissions');
+            if (!Schema::hasColumn('users', 'system_access')) {
+                $table->json('system_access')->nullable()->after('permissions');
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('system_access');
+            if (Schema::hasColumn('users', 'system_access')) {
+                $table->dropColumn('system_access');
+            }
         });
     }
 };
