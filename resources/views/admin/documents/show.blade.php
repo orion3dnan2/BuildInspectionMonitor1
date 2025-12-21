@@ -74,36 +74,92 @@
                                 style="border: none; display: block;">
                         </iframe>
                     @elseif(strtolower($fileExtension) === 'docx')
-                        <div id="docxContainer" class="p-6 bg-white" style="min-height: 600px;"></div>
+                        <div id="docxContainer" class="p-6 bg-white" style="min-height: 600px;">
+                            <div class="text-center p-6">
+                                <p class="text-slate-600">جاري تحميل الملف...</p>
+                            </div>
+                        </div>
                         <script>
-                            document.addEventListener('DOMContentLoaded', function() {
+                            function loadDocx() {
                                 const fileUrl = '{{ Storage::url($document->file_path) }}';
+                                const container = document.getElementById('docxContainer');
+                                
+                                if (typeof docx === 'undefined') {
+                                    container.innerHTML = `
+                                        <div class="text-center p-6">
+                                            <p class="text-red-600 font-medium">لم يتمكن من تحميل مكتبة عرض المستندات</p>
+                                            <a href="${fileUrl}" download class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition">
+                                                تحميل الملف
+                                            </a>
+                                        </div>
+                                    `;
+                                    return;
+                                }
+                                
                                 fetch(fileUrl)
-                                    .then(response => response.arrayBuffer())
+                                    .then(response => {
+                                        if (!response.ok) throw new Error('Network response error');
+                                        return response.arrayBuffer();
+                                    })
                                     .then(buffer => {
                                         const options = {
                                             className: 'docx-content',
                                             style: `
-                                                .docx-content { font-family: 'Tajawal', Arial, sans-serif; padding: 20px; }
-                                                .docx-content p { margin: 0.5rem 0; line-height: 1.6; }
-                                                .docx-content h1, .docx-content h2, .docx-content h3 { margin: 1rem 0 0.5rem 0; font-weight: bold; }
-                                                .docx-content table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
-                                                .docx-content td, .docx-content th { border: 1px solid #ddd; padding: 8px; text-align: right; }
-                                                .docx-content th { background-color: #f5f5f5; font-weight: bold; }
+                                                .docx-content { 
+                                                    font-family: 'Tajawal', Arial, sans-serif; 
+                                                    padding: 20px; 
+                                                    direction: rtl;
+                                                    text-align: right;
+                                                }
+                                                .docx-content p { 
+                                                    margin: 0.5rem 0; 
+                                                    line-height: 1.8;
+                                                    word-break: break-word;
+                                                }
+                                                .docx-content h1, .docx-content h2, .docx-content h3, .docx-content h4, .docx-content h5, .docx-content h6 { 
+                                                    margin: 1rem 0 0.5rem 0; 
+                                                    font-weight: bold; 
+                                                }
+                                                .docx-content table { 
+                                                    border-collapse: collapse; 
+                                                    width: 100%; 
+                                                    margin: 1rem 0; 
+                                                }
+                                                .docx-content td, .docx-content th { 
+                                                    border: 1px solid #ddd; 
+                                                    padding: 8px; 
+                                                    text-align: right; 
+                                                }
+                                                .docx-content th { 
+                                                    background-color: #f5f5f5; 
+                                                    font-weight: bold; 
+                                                }
                                             `
                                         };
-                                        docx.renderAsync(buffer, document.getElementById('docxContainer'), null, options);
+                                        return docx.renderAsync(buffer, container, null, options);
                                     })
                                     .catch(error => {
-                                        document.getElementById('docxContainer').innerHTML = `
+                                        console.error('Error loading DOCX:', error);
+                                        container.innerHTML = `
                                             <div class="text-center p-6">
                                                 <p class="text-red-600 font-medium">حدث خطأ في تحميل الملف</p>
-                                                <p class="text-slate-600 text-sm mt-2">يرجى تحميل الملف مباشرة</p>
+                                                <p class="text-slate-600 text-sm mt-2">${error.message}</p>
+                                                <a href="${fileUrl}" download class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                    </svg>
+                                                    تحميل الملف مباشرة
+                                                </a>
                                             </div>
                                         `;
-                                        console.error('Error loading DOCX:', error);
                                     });
-                            });
+                            }
+                            
+                            if (document.readyState === 'loading') {
+                                document.addEventListener('DOMContentLoaded', loadDocx);
+                            } else {
+                                loadDocx();
+                            }
                         </script>
                     @else
                         <div class="p-6 bg-white text-center">
