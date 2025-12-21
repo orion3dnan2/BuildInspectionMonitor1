@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class CorrespondenceController extends Controller
 {
@@ -301,6 +302,71 @@ class CorrespondenceController extends Controller
     {
         $correspondence->load(['signatures.user', 'creator', 'updater']);
         return view('admin.correspondences.viewer', compact('correspondence'));
+    }
+
+    /**
+     * Serve the correspondence file for inline preview.
+     * Attempts server-side conversion of DOCX to PDF using LibreOffice (soffice) if available.
+     */
+    public function file(Correspondence $correspondence)
+    {
+        if (!$correspondence->file_path || !Storage::disk('public')->exists($correspondence->file_path)) {
+            return abort(404, 'الملف غير موجود');
+        }
+
+        $disk = Storage::disk('public');
+        $storagePath = $disk->path($correspondence->file_path);
+        $mime = $correspondence->file_type ?? mime_content_type($storagePath);
+
+        // If PDF or image, serve directly inline
+        if (str_contains($mime, 'pdf') || str_starts_with($mime, 'image/')) {
+            return response()->file($storagePath, ['Content-Type' => $mime]);
+        }
+
+        // Handle Word documents (docx / msword)
+        if (str_contains($mime, 'word') || str_ends_with($correspondence->file_name, '.docx')) {
+            $tmpDir = storage_path('app/tmp_correspondences');
+            if (!is_dir($tmpDir)) {
+                @mkdir($tmpDir, 0755, true);
+            }
+
+            $hash = md5($storagePath . filemtime($storagePath));
+            $pdfPath = $tmpDir . DIRECTORY_SEPARATOR . $hash . '.pdf';
+
+            if (!file_exists($pdfPath)) {
+                // Try to find LibreOffice (soffice)
+                if (stripos(PHP_OS, 'WIN') === 0) {
+                    $soffice = trim(@shell_exec('where soffice 2>NUL'));
+                } else {
+                    $soffice = trim(@shell_exec('which soffice 2>/dev/null'));
+                }
+
+                if ($soffice) {
+                    $escapedSoffice = escapeshellarg($soffice);
+                    $escapedOutDir = escapeshellarg($tmpDir);
+                    $escapedInput = escapeshellarg($storagePath);
+                    $cmd = "$escapedSoffice --headless --convert-to pdf --outdir $escapedOutDir $escapedInput 2>&1";
+                    exec($cmd, $output, $returnVar);
+
+                    // The generated file usually has same base name with .pdf extension
+                    $generated = $tmpDir . DIRECTORY_SEPARATOR . pathinfo($storagePath, PATHINFO_FILENAME) . '.pdf';
+                    if (file_exists($generated)) {
+                        // Move/rename to cache path
+                        @rename($generated, $pdfPath);
+                    }
+                }
+            }
+
+            if (file_exists($pdfPath)) {
+                return response()->file($pdfPath, ['Content-Type' => 'application/pdf']);
+            }
+
+            // Fallback: stream the original file for download/inline
+            return $disk->response($correspondence->file_path);
+        }
+
+        // Other types: stream as response (browser may download or display)
+        return $disk->response($correspondence->file_path);
     }
 
     public function sign(Request $request, Correspondence $correspondence)

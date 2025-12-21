@@ -20,12 +20,9 @@ class DocumentWorkflow extends Model
         'completed_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'completed_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'completed_at' => 'datetime',
+    ];
 
     public function document(): BelongsTo
     {

@@ -160,6 +160,7 @@ Route::middleware('auth')->group(function () {
         Route::post('correspondences/import', [CorrespondenceController::class, 'storeImport'])->name('correspondences.store-import')->middleware('permission:correspondences.import');
         Route::get('correspondences/{correspondence}/download', [CorrespondenceController::class, 'download'])->name('correspondences.download')->middleware('permission:correspondences.view');
         Route::get('correspondences/{correspondence}/viewer', [CorrespondenceController::class, 'viewer'])->name('correspondences.viewer')->middleware('permission:correspondences.view');
+        Route::get('correspondences/{correspondence}/file', [CorrespondenceController::class, 'file'])->name('correspondences.file')->middleware('permission:correspondences.view');
         Route::post('correspondences/{correspondence}/sign', [CorrespondenceController::class, 'sign'])->name('correspondences.sign')->middleware('permission:correspondences.update');
         Route::get('correspondences', [CorrespondenceController::class, 'index'])->name('correspondences.index')->middleware('permission:correspondences.view');
         Route::get('correspondences/create', [CorrespondenceController::class, 'create'])->name('correspondences.create')->middleware('permission:correspondences.create');

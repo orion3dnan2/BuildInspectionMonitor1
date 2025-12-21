@@ -22,13 +22,10 @@ class Notification extends Model
         'read_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'data' => 'array',
-            'read_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'data' => 'array',
+        'read_at' => 'datetime',
+    ];
 
     public function user(): BelongsTo
     {

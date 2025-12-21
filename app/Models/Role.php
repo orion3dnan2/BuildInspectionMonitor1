@@ -18,12 +18,9 @@ class Role extends Model
         'level',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'is_system' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'is_system' => 'boolean',
+    ];
 
     public function permissions(): BelongsToMany
     {

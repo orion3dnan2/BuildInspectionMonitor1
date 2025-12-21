@@ -30,13 +30,10 @@ class Correspondence extends Model
         'updated_by',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'document_date' => 'date',
-            'file_size' => 'integer',
-        ];
-    }
+    protected $casts = [
+        'document_date' => 'date',
+        'file_size' => 'integer',
+    ];
 
     public function creator(): BelongsTo
     {

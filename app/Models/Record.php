@@ -30,12 +30,9 @@ class Record extends Model
     ];
 
 
-    protected function casts(): array
-    {
-        return [
-            'round_date' => 'date',
-        ];
-    }
+    protected $casts = [
+        'round_date' => 'date',
+    ];
 
     public function creator(): BelongsTo
     {

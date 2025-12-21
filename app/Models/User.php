@@ -30,14 +30,11 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'permissions' => 'array',
-            'system_access' => 'array',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'permissions' => 'array',
+        'system_access' => 'array',
+    ];
 
     public function records(): HasMany
     {
@@ -323,17 +320,17 @@ class User extends Authenticatable
 
     public function canViewRecords(): bool
     {
-        return $this->hasPermissionKey('records.view') || $this->hasPermission('view_records') || true;
+        return $this->hasPermissionKey('records.view') || $this->hasPermission('view_records');
     }
 
     public function canSearch(): bool
     {
-        return $this->hasPermissionKey('search.view') || true;
+        return $this->hasPermissionKey('search.view');
     }
 
     public function canViewReports(): bool
     {
-        return $this->hasPermissionKey('reports.view') || true;
+        return $this->hasPermissionKey('reports.view');
     }
 
     public function getRoleNameAttribute(): string

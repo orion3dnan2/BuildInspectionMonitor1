@@ -162,9 +162,9 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
-                                @if($correspondence->file_path && ($correspondence->isPdf() || $correspondence->isImage()))
+                                @if($correspondence->file_path && ($correspondence->isPdf() || $correspondence->isImage() || $correspondence->isWord()))
                                 <button type="button" 
-                                    onclick="openPreview('{{ asset('storage/' . $correspondence->file_path) }}', '{{ $correspondence->isPdf() ? 'pdf' : 'image' }}', '{{ $correspondence->title }}')" 
+                                    onclick="openPreview('{{ route('admin.correspondences.file', $correspondence) }}', '{{ $correspondence->isPdf() ? 'pdf' : ($correspondence->isImage() ? 'image' : 'word') }}', '{{ $correspondence->title }}', '{{ route('admin.correspondences.download', $correspondence) }}')" 
                                     class="p-1.5 text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/30 rounded transition" 
                                     title="معاينة سريعة">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,45 +224,52 @@
     </div>
 </div>
 
-<div id="previewModal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closePreview()"></div>
-    <div class="absolute inset-4 md:inset-8 lg:inset-12 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+<div id="previewDrawer" class="fixed inset-y-0 right-0 z-50 hidden w-full md:w-1/2 lg:w-2/5 xl:w-1/3">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeDrawer()"></div>
+    <div class="absolute right-0 top-0 bottom-0 bg-white dark:bg-slate-800 shadow-2xl flex flex-col overflow-hidden h-full">
         <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-            <h3 id="previewTitle" class="text-lg font-bold text-slate-800 dark:text-white">معاينة الملف</h3>
+            <h3 id="drawerTitle" class="text-lg font-bold text-slate-800 dark:text-white">معاينة الملف</h3>
             <div class="flex items-center gap-2">
-                <a id="previewDownload" href="#" class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition flex items-center gap-2 text-sm">
+                <a id="drawerDownload" href="#" class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition flex items-center gap-2 text-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                     </svg>
                     تحميل
                 </a>
-                <button onclick="closePreview()" class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition">
+                <button onclick="closeDrawer()" class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
         </div>
-        <div id="previewContent" class="flex-1 overflow-auto p-4 bg-slate-100 dark:bg-slate-900">
+        <div id="drawerContent" class="flex-1 overflow-auto p-4 bg-slate-100 dark:bg-slate-900">
         </div>
     </div>
 </div>
 
 @push('scripts')
+<!-- Mammoth.js for client-side docx -> HTML conversion -->
+<script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
 <script>
-function openPreview(url, type, title) {
-    const modal = document.getElementById('previewModal');
-    const content = document.getElementById('previewContent');
-    const titleEl = document.getElementById('previewTitle');
-    const downloadBtn = document.getElementById('previewDownload');
-    
+async function openPreview(url, type, title, downloadRoute = null) {
+    // Backwards-compatible function used by buttons: delegates to drawer
+    openDrawer(url, type, title, downloadRoute);
+}
+
+function openDrawer(url, type, title, downloadRoute = null) {
+    const drawer = document.getElementById('previewDrawer');
+    const content = document.getElementById('drawerContent');
+    const titleEl = document.getElementById('drawerTitle');
+    const downloadBtn = document.getElementById('drawerDownload');
+
     titleEl.textContent = title || 'معاينة الملف';
-    downloadBtn.href = url;
+    downloadBtn.href = downloadRoute || url;
     downloadBtn.setAttribute('download', '');
-    
+
     if (type === 'pdf') {
         content.innerHTML = `
-            <iframe src="${url}#toolbar=1&navpanes=0" class="w-full h-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white" style="min-height: 100%;"></iframe>
+            <iframe src="${url}#toolbar=1&navpanes=0" class="w-full h-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white" style="min-height: 60vh; min-width: 100%;"></iframe>
         `;
     } else if (type === 'image') {
         content.innerHTML = `
@@ -270,24 +277,40 @@ function openPreview(url, type, title) {
                 <img src="${url}" alt="${title}" class="max-w-full max-h-full object-contain rounded-lg shadow-lg">
             </div>
         `;
+    } else if (type === 'word') {
+        // Use mammoth.js to convert docx to HTML in the browser
+        content.innerHTML = `<div class="text-center py-8">جارٍ تحميل الملف...</div>`;
+        fetch(url)
+            .then(res => res.arrayBuffer())
+            .then(arrayBuffer => mammoth.convertToHtml({arrayBuffer: arrayBuffer}))
+            .then(result => {
+                // Basic sanitization: only allow the converted HTML block
+                content.innerHTML = `<div class="prose max-w-none dark:prose-invert">${result.value}</div>`;
+            })
+            .catch(err => {
+                console.error('Error converting docx:', err);
+                content.innerHTML = `<div class="text-center py-8">تعذر عرض ملف Word في المعاينة. يمكنك تحميله بدلاً من ذلك.</div>`;
+            });
+    } else {
+        content.innerHTML = `<div class="text-center py-8">لا يمكن معاينة هذا النوع من الملفات.</div>`;
     }
-    
-    modal.classList.remove('hidden');
+
+    drawer.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
 
-function closePreview() {
-    const modal = document.getElementById('previewModal');
-    const content = document.getElementById('previewContent');
-    
-    modal.classList.add('hidden');
+function closeDrawer() {
+    const drawer = document.getElementById('previewDrawer');
+    const content = document.getElementById('drawerContent');
+
+    drawer.classList.add('hidden');
     content.innerHTML = '';
     document.body.style.overflow = '';
 }
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        closePreview();
+        closeDrawer();
     }
 });
 </script>

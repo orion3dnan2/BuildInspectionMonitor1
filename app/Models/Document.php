@@ -30,12 +30,9 @@ class Document extends Model
         'file_path',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'approved_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'approved_at' => 'datetime',
+    ];
 
     protected static function boot()
     {

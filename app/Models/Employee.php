@@ -37,14 +37,11 @@ class Employee extends Model
         'notes',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'hire_date' => 'date',
-            'birth_date' => 'date',
-            'salary' => 'decimal:3',
-        ];
-    }
+    protected $casts = [
+        'hire_date' => 'date',
+        'birth_date' => 'date',
+        'salary' => 'decimal:3',
+    ];
 
     public function department(): BelongsTo
     {

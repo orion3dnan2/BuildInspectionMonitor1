@@ -19,12 +19,9 @@ class Attendance extends Model
         'notes',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'date' => 'date',
-        ];
-    }
+    protected $casts = [
+        'date' => 'date',
+    ];
 
     public function employee(): BelongsTo
     {
