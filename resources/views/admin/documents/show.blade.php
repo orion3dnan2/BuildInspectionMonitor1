@@ -355,6 +355,7 @@
 
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx-preview@0.1.38/build/index.umd.js"></script>
 <script>
 let canvas, ctx, isDrawing = false, lastX = 0, lastY = 0;
 
@@ -373,12 +374,58 @@ function openFileViewer(fileUrl, extension) {
                 <iframe src="${fileUrl}#toolbar=0" width="100%" height="100%" style="border: none; min-height: 600px;"></iframe>
             </div>
         `;
-    } else if (extension === 'docx' || extension === 'doc') {
-        // Use Google Docs Viewer for Word documents
-        const encodedUrl = encodeURIComponent(fileUrl);
+    } else if (extension === 'docx') {
+        // Use docx-preview for Word documents
+        content.innerHTML = `
+            <div class="p-6 bg-white">
+                <div id="docxContainer" class="prose prose-lg max-w-none"></div>
+                <div class="mt-4 text-center">
+                    <p class="text-sm text-slate-500 mb-2">جاري تحميل الملف...</p>
+                </div>
+            </div>
+        `;
+        
+        // Fetch and render DOCX
+        fetch(fileUrl)
+            .then(response => response.arrayBuffer())
+            .then(buffer => {
+                const options = {
+                    className: 'docx-container',
+                    style: `
+                        .docx-container { max-width: 100%; padding: 20px; }
+                        .docx-container p { margin: 0.5rem 0; }
+                        .docx-container table { border-collapse: collapse; width: 100%; }
+                        .docx-container td, .docx-container th { border: 1px solid #ddd; padding: 8px; }
+                    `
+                };
+                docx.renderAsync(buffer, document.getElementById('docxContainer'), null, options);
+            })
+            .catch(error => {
+                document.getElementById('docxContainer').innerHTML = `
+                    <div class="text-center p-6">
+                        <p class="text-red-600 font-medium">حدث خطأ في تحميل الملف</p>
+                        <p class="text-slate-600 text-sm mt-2">يرجى تحميل الملف مباشرة</p>
+                    </div>
+                `;
+                console.error('Error loading DOCX:', error);
+            });
+    } else if (extension === 'doc') {
+        // For old .doc files, offer download only
         content.innerHTML = `
             <div class="flex items-center justify-center h-full">
-                <iframe src="https://docs.google.com/gview?url=${encodedUrl}&embedded=true" width="100%" height="100%" style="border: none; min-height: 600px;"></iframe>
+                <div class="text-center">
+                    <svg class="w-16 h-16 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <h4 class="text-lg font-medium text-slate-800 mb-2">صيغة Word قديمة</h4>
+                    <p class="text-slate-600 mb-4">النظام يدعم ملفات DOCX فقط (Word 2007 وما بعده)</p>
+                    <a href="${fileUrl}" download class="inline-flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        تحميل الملف
+                    </a>
+                </div>
             </div>
         `;
     } else {
@@ -390,7 +437,7 @@ function openFileViewer(fileUrl, extension) {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
                     <h4 class="text-lg font-medium text-slate-800 mb-2">صيغة الملف غير مدعومة</h4>
-                    <p class="text-slate-600 mb-4">يدعم النظام عرض ملفات PDF و Word فقط</p>
+                    <p class="text-slate-600 mb-4">يدعم النظام عرض ملفات PDF و DOCX فقط</p>
                     <a href="${fileUrl}" download class="inline-flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
