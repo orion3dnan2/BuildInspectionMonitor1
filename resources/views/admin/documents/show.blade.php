@@ -198,12 +198,19 @@
                 @if($document->file_path)
                 <div>
                     <dt class="text-sm text-slate-500">المرفق</dt>
-                    <dd>
-                        <a href="{{ Storage::url($document->file_path) }}" target="_blank" class="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700">
+                    <dd class="space-y-2">
+                        <button onclick="openFileViewer('{{ Storage::url($document->file_path) }}', '{{ pathinfo($document->file_path, PATHINFO_EXTENSION) }}')" class="inline-flex items-center gap-2 px-3 py-2 bg-sky-100 hover:bg-sky-200 text-sky-700 rounded-lg transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            عرض الملف
+                        </button>
+                        <a href="{{ Storage::url($document->file_path) }}" download class="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
-                            تحميل المرفق
+                            تحميل
                         </a>
                     </dd>
                 </div>
@@ -329,9 +336,79 @@
 </div>
 @endsection
 
+<!-- File Viewer Modal -->
+<div id="fileViewerModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between p-4 border-b border-slate-200">
+            <h3 class="text-lg font-bold text-slate-800">عرض الملف</h3>
+            <button onclick="closeFileViewer()" class="p-2 hover:bg-slate-100 rounded-lg transition">
+                <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="fileViewerContent" class="flex-1 overflow-auto bg-slate-50">
+            <!-- Content will be inserted here -->
+        </div>
+    </div>
+</div>
+
 @push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 let canvas, ctx, isDrawing = false, lastX = 0, lastY = 0;
+
+function openFileViewer(fileUrl, extension) {
+    const modal = document.getElementById('fileViewerModal');
+    const content = document.getElementById('fileViewerContent');
+    extension = extension.toLowerCase();
+
+    // Clear previous content
+    content.innerHTML = '';
+
+    if (extension === 'pdf') {
+        // Use PDF.js to display PDF
+        content.innerHTML = `
+            <div class="flex items-center justify-center h-full">
+                <iframe src="${fileUrl}#toolbar=0" width="100%" height="100%" style="border: none; min-height: 600px;"></iframe>
+            </div>
+        `;
+    } else if (extension === 'docx' || extension === 'doc') {
+        // Use Google Docs Viewer for Word documents
+        const encodedUrl = encodeURIComponent(fileUrl);
+        content.innerHTML = `
+            <div class="flex items-center justify-center h-full">
+                <iframe src="https://docs.google.com/gview?url=${encodedUrl}&embedded=true" width="100%" height="100%" style="border: none; min-height: 600px;"></iframe>
+            </div>
+        `;
+    } else {
+        // Unsupported format
+        content.innerHTML = `
+            <div class="flex items-center justify-center h-full">
+                <div class="text-center">
+                    <svg class="w-16 h-16 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <h4 class="text-lg font-medium text-slate-800 mb-2">صيغة الملف غير مدعومة</h4>
+                    <p class="text-slate-600 mb-4">يدعم النظام عرض ملفات PDF و Word فقط</p>
+                    <a href="${fileUrl}" download class="inline-flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        تحميل الملف
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function closeFileViewer() {
+    const modal = document.getElementById('fileViewerModal');
+    modal.classList.add('hidden');
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     canvas = document.getElementById('signatureCanvas');
@@ -353,6 +430,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('approveForm')?.addEventListener('submit', function(e) {
         document.getElementById('signatureData').value = canvas.toDataURL();
+    });
+
+    // Close modal when clicking outside
+    document.getElementById('fileViewerModal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeFileViewer();
+        }
     });
 });
 
