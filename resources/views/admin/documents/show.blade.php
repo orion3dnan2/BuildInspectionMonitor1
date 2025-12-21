@@ -36,8 +36,8 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2 space-y-6">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <div class="flex items-center justify-between mb-4">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200">
                 <h2 class="text-lg font-bold text-slate-800">محتوى المستند</h2>
                 @switch($document->status)
                     @case('draft')
@@ -61,10 +61,71 @@
                 @endswitch
             </div>
             
-            <div class="prose prose-lg max-w-none text-slate-700 leading-relaxed whitespace-pre-wrap">{{ $document->content }}</div>
+            @if($document->file_path)
+                <div id="documentPreview" class="w-full" style="min-height: 600px; overflow-y: auto; background: #f5f5f5;">
+                    @php
+                        $fileExtension = pathinfo($document->file_path, PATHINFO_EXTENSION);
+                    @endphp
+                    
+                    @if(strtolower($fileExtension) === 'pdf')
+                        <iframe src="{{ Storage::url($document->file_path) }}#toolbar=0" 
+                                width="100%" 
+                                height="600" 
+                                style="border: none; display: block;">
+                        </iframe>
+                    @elseif(strtolower($fileExtension) === 'docx')
+                        <div id="docxContainer" class="p-6 bg-white" style="min-height: 600px;"></div>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const fileUrl = '{{ Storage::url($document->file_path) }}';
+                                fetch(fileUrl)
+                                    .then(response => response.arrayBuffer())
+                                    .then(buffer => {
+                                        const options = {
+                                            className: 'docx-content',
+                                            style: `
+                                                .docx-content { font-family: 'Tajawal', Arial, sans-serif; padding: 20px; }
+                                                .docx-content p { margin: 0.5rem 0; line-height: 1.6; }
+                                                .docx-content h1, .docx-content h2, .docx-content h3 { margin: 1rem 0 0.5rem 0; font-weight: bold; }
+                                                .docx-content table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+                                                .docx-content td, .docx-content th { border: 1px solid #ddd; padding: 8px; text-align: right; }
+                                                .docx-content th { background-color: #f5f5f5; font-weight: bold; }
+                                            `
+                                        };
+                                        docx.renderAsync(buffer, document.getElementById('docxContainer'), null, options);
+                                    })
+                                    .catch(error => {
+                                        document.getElementById('docxContainer').innerHTML = `
+                                            <div class="text-center p-6">
+                                                <p class="text-red-600 font-medium">حدث خطأ في تحميل الملف</p>
+                                                <p class="text-slate-600 text-sm mt-2">يرجى تحميل الملف مباشرة</p>
+                                            </div>
+                                        `;
+                                        console.error('Error loading DOCX:', error);
+                                    });
+                            });
+                        </script>
+                    @else
+                        <div class="p-6 bg-white text-center">
+                            <p class="text-slate-600">نوع الملف: {{ strtoupper($fileExtension) }}</p>
+                            <p class="text-slate-500 text-sm mt-2">نوع الملف غير مدعوم للعرض المباشر</p>
+                            <a href="{{ Storage::url($document->file_path) }}" download class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                تحميل الملف
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            @else
+                <div class="p-6">
+                    <div class="prose prose-lg max-w-none text-slate-700 leading-relaxed whitespace-pre-wrap">{{ $document->content }}</div>
+                </div>
+            @endif
 
             @if($document->signature_data && $document->status === 'approved')
-            <div class="mt-6 pt-6 border-t border-slate-200">
+            <div class="mt-6 pt-6 px-6 pb-6 border-t border-slate-200">
                 <h3 class="text-sm font-medium text-slate-700 mb-2">توقيع المدير</h3>
                 <img src="{{ $document->signature_data }}" alt="التوقيع" class="max-w-xs border border-slate-200 rounded-lg">
                 <p class="mt-2 text-sm text-slate-500">{{ $document->approver?->name }} - {{ $document->approved_at?->format('Y/m/d H:i') }}</p>

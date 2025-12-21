@@ -47,6 +47,8 @@
         }
     </script>
     @stack('styles')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.1.38/build/index.umd.js"></script>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-base transition-colors duration-200">
     <div class="flex min-h-screen">
