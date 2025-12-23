@@ -332,48 +332,26 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="p-4 border-b border-slate-200 flex items-center justify-between">
                 <h2 class="text-lg font-bold text-slate-800">عرض المستند</h2>
-                <div class="flex items-center gap-2">
-                    <button onclick="zoomOut()" class="p-2 hover:bg-slate-100 rounded-lg transition" title="تصغير">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path>
-                        </svg>
-                    </button>
-                    <span id="zoomLevel" class="text-sm text-slate-600">100%</span>
-                    <button onclick="zoomIn()" class="p-2 hover:bg-slate-100 rounded-lg transition" title="تكبير">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path>
-                        </svg>
-                    </button>
-                </div>
+                @if($document->getViewablePdfPath())
+                <a href="{{ route('admin.documents.download', $document) }}" class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm rounded-lg transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    تحميل
+                </a>
+                @endif
             </div>
             
             @if($document->getViewablePdfPath())
-            <div id="pdfViewerContainer" class="relative bg-slate-100" style="height: 600px; overflow: auto;">
-                <div id="pdfViewer" class="flex flex-col items-center py-4 gap-4"></div>
-                <div id="pdfLoading" class="absolute inset-0 flex items-center justify-center bg-white">
-                    <div class="text-center">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500 mx-auto"></div>
-                        <p class="mt-4 text-slate-600">جاري تحميل المستند...</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="p-4 border-t border-slate-200 flex items-center justify-center gap-4">
-                <button onclick="prevPage()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                    السابق
-                </button>
-                <span class="text-slate-600">
-                    صفحة <span id="currentPage">1</span> من <span id="totalPages">1</span>
-                </span>
-                <button onclick="nextPage()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition flex items-center gap-2">
-                    التالي
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </button>
+            <div class="relative bg-slate-100" style="height: 700px;">
+                <iframe 
+                    id="pdfViewer"
+                    src="/pdfjs/web/viewer.html?file={{ urlencode(route('admin.documents.pdf', $document)) }}"
+                    width="100%" 
+                    height="100%" 
+                    style="border: none;"
+                    allowfullscreen>
+                </iframe>
             </div>
             @else
             <div class="p-12 text-center">
@@ -427,108 +405,6 @@
         @endif
     </div>
 </div>
-
-@if($document->getViewablePdfPath())
-<script src="/pdfjs/build/pdf.mjs" type="module"></script>
-<script type="module">
-    const pdfjsLib = await import('/pdfjs/build/pdf.mjs');
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/build/pdf.worker.mjs';
-    
-    let pdfDoc = null;
-    let currentPage = 1;
-    let scale = 1.0;
-    let renderedPages = [];
-    
-    const pdfUrl = '{{ route("admin.documents.pdf", $document) }}';
-    
-    async function loadPdf() {
-        try {
-            const loadingTask = pdfjsLib.getDocument(pdfUrl);
-            pdfDoc = await loadingTask.promise;
-            
-            document.getElementById('totalPages').textContent = pdfDoc.numPages;
-            document.getElementById('pdfLoading').style.display = 'none';
-            
-            renderAllPages();
-        } catch (error) {
-            console.error('Error loading PDF:', error);
-            document.getElementById('pdfLoading').innerHTML = `
-                <div class="text-center p-6">
-                    <p class="text-red-600 font-medium">حدث خطأ في تحميل المستند</p>
-                    <p class="text-slate-500 text-sm mt-2">${error.message}</p>
-                </div>
-            `;
-        }
-    }
-    
-    async function renderPage(pageNum) {
-        const page = await pdfDoc.getPage(pageNum);
-        const viewport = page.getViewport({ scale: scale });
-        
-        const canvas = document.createElement('canvas');
-        canvas.className = 'shadow-lg';
-        canvas.id = `page-${pageNum}`;
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        
-        const context = canvas.getContext('2d');
-        
-        await page.render({
-            canvasContext: context,
-            viewport: viewport
-        }).promise;
-        
-        return canvas;
-    }
-    
-    async function renderAllPages() {
-        const viewer = document.getElementById('pdfViewer');
-        viewer.innerHTML = '';
-        renderedPages = [];
-        
-        for (let i = 1; i <= pdfDoc.numPages; i++) {
-            const canvas = await renderPage(i);
-            viewer.appendChild(canvas);
-            renderedPages.push(canvas);
-        }
-    }
-    
-    window.prevPage = function() {
-        if (currentPage <= 1) return;
-        currentPage--;
-        document.getElementById('currentPage').textContent = currentPage;
-        scrollToPage(currentPage);
-    }
-    
-    window.nextPage = function() {
-        if (currentPage >= pdfDoc.numPages) return;
-        currentPage++;
-        document.getElementById('currentPage').textContent = currentPage;
-        scrollToPage(currentPage);
-    }
-    
-    function scrollToPage(pageNum) {
-        const canvas = document.getElementById(`page-${pageNum}`);
-        if (canvas) {
-            canvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
-    
-    window.zoomIn = function() {
-        scale = Math.min(scale + 0.25, 3.0);
-        document.getElementById('zoomLevel').textContent = Math.round(scale * 100) + '%';
-        renderAllPages();
-    }
-    
-    window.zoomOut = function() {
-        scale = Math.max(scale - 0.25, 0.5);
-        document.getElementById('zoomLevel').textContent = Math.round(scale * 100) + '%';
-        renderAllPages();
-    }
-    
-    loadPdf();
-</script>
-@endif
 
 @if($document->canBeSigned() && !$document->is_signed)
 <script>

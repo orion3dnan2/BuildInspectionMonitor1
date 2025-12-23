@@ -14,11 +14,42 @@ class PdfConversionService
     protected string $pdfPath = 'pdfs';
     protected string $signedPath = 'signed';
 
+    public function __construct()
+    {
+        $this->ensureDirectoriesExist();
+    }
+
+    protected function ensureDirectoriesExist(): void
+    {
+        $directories = [
+            Storage::path($this->uploadPath),
+            Storage::path($this->pdfPath),
+            Storage::path($this->signedPath),
+        ];
+
+        foreach ($directories as $dir) {
+            if (!file_exists($dir)) {
+                mkdir($dir, 0755, true);
+            }
+        }
+    }
+
+    public function isLibreOfficeAvailable(): bool
+    {
+        $output = [];
+        $returnCode = 0;
+        exec('which libreoffice 2>/dev/null', $output, $returnCode);
+        return $returnCode === 0 && !empty($output);
+    }
+
     public function uploadAndConvert(UploadedFile $file, ?string $customName = null): array
     {
+        $this->ensureDirectoriesExist();
+        
         $originalName = $file->getClientOriginalName();
         $extension = strtolower($file->getClientOriginalExtension());
         $baseName = $customName ?? pathinfo($originalName, PATHINFO_FILENAME);
+        $baseName = preg_replace('/[^a-zA-Z0-9_\-\x{0600}-\x{06FF}]/u', '_', $baseName);
         $uniqueName = $baseName . '_' . uniqid();
         
         $originalPath = $file->storeAs($this->uploadPath, $uniqueName . '.' . $extension);
@@ -35,6 +66,13 @@ class PdfConversionService
             $result['pdf_path'] = $originalPath;
             $result['message'] = 'PDF file uploaded successfully';
         } elseif (in_array($extension, ['doc', 'docx'])) {
+            if (!$this->isLibreOfficeAvailable()) {
+                Log::warning('LibreOffice not available, storing original file without conversion');
+                $result['pdf_path'] = null;
+                $result['message'] = 'Word document uploaded but conversion not available';
+                return $result;
+            }
+            
             $convertedPdf = $this->convertToPdf($originalPath, $uniqueName);
             if ($convertedPdf) {
                 $result['pdf_path'] = $convertedPdf;
@@ -58,6 +96,11 @@ class PdfConversionService
         
         if (!file_exists($outputDir)) {
             mkdir($outputDir, 0755, true);
+        }
+
+        if (!file_exists($fullPath)) {
+            Log::error('Source file not found for conversion: ' . $fullPath);
+            return null;
         }
 
         $command = sprintf(
@@ -90,18 +133,24 @@ class PdfConversionService
 
         $pdfFiles = glob($outputDir . '/*.pdf');
         if (!empty($pdfFiles)) {
-            $latestPdf = end($pdfFiles);
+            usort($pdfFiles, function($a, $b) {
+                return filemtime($b) - filemtime($a);
+            });
+            $latestPdf = $pdfFiles[0];
             $finalPdfName = $outputName . '.pdf';
             $finalPdfPath = $this->pdfPath . '/' . $finalPdfName;
             rename($latestPdf, Storage::path($finalPdfPath));
             return $finalPdfPath;
         }
 
+        Log::error('PDF conversion failed - no output file found');
         return null;
     }
 
     public function addSignatureToPdf(string $pdfPath, string $signatureData, array $options = []): ?string
     {
+        $this->ensureDirectoriesExist();
+        
         $fullPdfPath = Storage::path($pdfPath);
         
         if (!file_exists($fullPdfPath)) {
@@ -148,6 +197,11 @@ class PdfConversionService
             
             @unlink($signatureImage);
             
+            if (!file_exists($fullSignedPath)) {
+                Log::error('Signed PDF was not created');
+                return null;
+            }
+            
             return $signedPath;
             
         } catch (\Exception $e) {
@@ -165,12 +219,14 @@ class PdfConversionService
         
         $imageData = base64_decode($signatureData);
         if ($imageData === false) {
+            Log::error('Failed to decode signature base64 data');
             return null;
         }
         
         $tempPath = storage_path('app/temp_signature_' . uniqid() . '.png');
         
         if (file_put_contents($tempPath, $imageData) === false) {
+            Log::error('Failed to write signature image to temp file');
             return null;
         }
         
