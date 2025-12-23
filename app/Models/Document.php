@@ -160,7 +160,7 @@ class Document extends Model
     public function canBeSigned(): bool
     {
         return !$this->is_signed && 
-               in_array($this->status, ['draft', 'under_review', 'pending_review', 'pending_approval']) &&
+               $this->status === 'pending_approval' &&
                $this->getViewablePdfPath() !== null;
     }
 
