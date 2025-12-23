@@ -446,12 +446,17 @@
 </div>
 
 @if($document->isWordDocument())
-<script src="https://unpkg.com/docx-preview@0.3.7/dist/docx-preview.min.js"></script>
+<script src="https://unpkg.com/docx-preview@0.3.3/dist/docx-preview.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    function loadWordDocument() {
         const container = document.getElementById('wordContent');
         const loading = document.getElementById('wordLoading');
         const wordUrl = '{{ route("admin.documents.word", $document) }}';
+        
+        if (typeof window.docx === 'undefined') {
+            setTimeout(loadWordDocument, 100);
+            return;
+        }
         
         fetch(wordUrl)
             .then(response => {
@@ -459,7 +464,7 @@
                 return response.arrayBuffer();
             })
             .then(arrayBuffer => {
-                return docx.renderAsync(arrayBuffer, container, null, {
+                return window.docx.renderAsync(arrayBuffer, container, null, {
                     className: 'docx-wrapper',
                     inWrapper: true,
                     ignoreWidth: false,
@@ -468,11 +473,7 @@
                     breakPages: true,
                     ignoreLastRenderedPageBreak: true,
                     experimental: true,
-                    useBase64URL: true,
-                    renderHeaders: true,
-                    renderFooters: true,
-                    renderFootnotes: true,
-                    renderEndnotes: true,
+                    useBase64URL: true
                 });
             })
             .then(() => {
@@ -482,7 +483,13 @@
                 console.error('Error loading Word document:', error);
                 loading.innerHTML = '<div class="text-center"><p class="text-red-500">فشل في تحميل المستند</p><p class="text-sm text-slate-500 mt-2">' + error.message + '</p></div>';
             });
-    });
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadWordDocument);
+    } else {
+        loadWordDocument();
+    }
 </script>
 <style>
     #wordContent .docx-wrapper {
