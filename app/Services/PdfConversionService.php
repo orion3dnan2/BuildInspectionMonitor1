@@ -259,23 +259,41 @@ class PdfConversionService
             $pdf = new Fpdi();
             $pdf->setPrintHeader(false);
             $pdf->setPrintFooter(false);
+            $pdf->SetAutoPageBreak(false, 0);
+            $pdf->SetMargins(0, 0, 0);
             
             $pageCount = $pdf->setSourceFile($fullPdfPath);
             
-            $signaturePage = $options['page'] ?? $pageCount;
-            $signatureX = $options['x'] ?? 120;
-            $signatureY = $options['y'] ?? 240;
-            $signatureWidth = $options['width'] ?? 50;
+            $signaturePage = isset($options['page']) && $options['page'] > 0 ? (int)$options['page'] : $pageCount;
+            if ($signaturePage > $pageCount) {
+                $signaturePage = $pageCount;
+            }
+            
+            $signatureX = isset($options['x']) ? (float)$options['x'] : 120;
+            $signatureY = isset($options['y']) ? (float)$options['y'] : 200;
+            $signatureWidth = isset($options['width']) ? (float)$options['width'] : 50;
+            
+            Log::info("Adding signature to page {$signaturePage} of {$pageCount} at position ({$signatureX}, {$signatureY})");
             
             for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
                 $templateId = $pdf->importPage($pageNo);
                 $size = $pdf->getTemplateSize($templateId);
                 
-                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-                $pdf->useTemplate($templateId);
+                $orientation = $size['orientation'];
+                $pageWidth = $size['width'];
+                $pageHeight = $size['height'];
                 
-                if ($pageNo == $signaturePage) {
-                    $pdf->Image($fullSignaturePath, $signatureX, $signatureY, $signatureWidth);
+                $pdf->AddPage($orientation, [$pageWidth, $pageHeight]);
+                
+                $pdf->useTemplate($templateId, 0, 0, $pageWidth, $pageHeight, true);
+                
+                if ($pageNo === $signaturePage) {
+                    $adjustedX = max(0, min($signatureX, $pageWidth - $signatureWidth));
+                    $adjustedY = max(0, min($signatureY, $pageHeight - 20));
+                    
+                    Log::info("Placing signature image at ({$adjustedX}, {$adjustedY}) with width {$signatureWidth}");
+                    
+                    $pdf->Image($fullSignaturePath, $adjustedX, $adjustedY, $signatureWidth, 0, '', '', '', false, 300);
                 }
             }
             
@@ -290,11 +308,19 @@ class PdfConversionService
                 return null;
             }
             
-            Log::info('Signature added successfully: ' . $signedPath);
+            $originalPageCount = $pageCount;
+            $verifyPdf = new Fpdi();
+            $signedPageCount = $verifyPdf->setSourceFile($fullSignedPath);
+            
+            if ($signedPageCount !== $originalPageCount) {
+                Log::error("Page count mismatch: original={$originalPageCount}, signed={$signedPageCount}");
+            }
+            
+            Log::info("Signature added successfully: {$signedPath} (pages: {$signedPageCount})");
             return $signedPath;
             
         } catch (\Exception $e) {
-            Log::error('Signature error: ' . $e->getMessage());
+            Log::error('Signature error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return null;
         }
     }
