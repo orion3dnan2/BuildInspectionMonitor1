@@ -244,10 +244,9 @@ class PdfConversionService
             $pageCount = $pdf->setSourceFile($fullPdfPath);
             
             $signaturePage = $options['page'] ?? $pageCount;
-            $signatureWidth = $options['width'] ?? 40;
-            $signatureHeight = $options['height'] ?? 20;
-            $bottomMargin = $options['bottom_margin'] ?? 15;
-            $rightMargin = $options['right_margin'] ?? 20;
+            $signatureX = $options['x'] ?? 120;
+            $signatureY = $options['y'] ?? 240;
+            $signatureWidth = $options['width'] ?? 50;
             
             for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
                 $templateId = $pdf->importPage($pageNo);
@@ -257,12 +256,6 @@ class PdfConversionService
                 $pdf->useTemplate($templateId);
                 
                 if ($pageNo == $signaturePage) {
-                    $pageWidth = $size['width'];
-                    $pageHeight = $size['height'];
-                    
-                    $signatureX = $pageWidth - $signatureWidth - $rightMargin;
-                    $signatureY = $pageHeight - $signatureHeight - $bottomMargin;
-                    
                     $pdf->Image($fullSignaturePath, $signatureX, $signatureY, $signatureWidth);
                 }
             }
