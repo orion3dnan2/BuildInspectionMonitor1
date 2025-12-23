@@ -240,36 +240,29 @@ class PdfConversionService
             $pdf = new Fpdi();
             $pdf->setPrintHeader(false);
             $pdf->setPrintFooter(false);
-            $pdf->SetAutoPageBreak(false, 0);
             
             $pageCount = $pdf->setSourceFile($fullPdfPath);
             
-            $targetPage = $options['page'] ?? $pageCount;
+            $signaturePage = $options['page'] ?? $pageCount;
             $signatureWidth = $options['width'] ?? 40;
-            $bottomMargin = $options['bottom_margin'] ?? 30;
+            $signatureHeight = $options['height'] ?? 20;
+            $bottomMargin = $options['bottom_margin'] ?? 25;
             $leftMargin = $options['left_margin'] ?? 20;
-            
-            Log::info("PDF signing: {$pageCount} pages, target page: {$targetPage}");
             
             for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
                 $templateId = $pdf->importPage($pageNo);
                 $size = $pdf->getTemplateSize($templateId);
                 
-                $orientation = $size['orientation'];
-                $pageWidth = $size['width'];
-                $pageHeight = $size['height'];
+                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                $pdf->useTemplate($templateId);
                 
-                $pdf->AddPage($orientation, [$pageWidth, $pageHeight]);
-                
-                $pdf->useTemplate($templateId, 0, 0, $pageWidth, $pageHeight);
-                
-                if ($pageNo == $targetPage) {
+                if ($pageNo == $signaturePage) {
+                    $pageHeight = $size['height'];
+                    
                     $signatureX = $leftMargin;
-                    $signatureY = $pageHeight - $bottomMargin;
+                    $signatureY = $pageHeight - $signatureHeight - $bottomMargin;
                     
-                    Log::info("Placing signature at: x={$signatureX}, y={$signatureY}, width={$signatureWidth}");
-                    
-                    $pdf->Image($fullSignaturePath, $signatureX, $signatureY, $signatureWidth, 0, '', '', '', false, 300);
+                    $pdf->Image($fullSignaturePath, $signatureX, $signatureY, $signatureWidth);
                 }
             }
             
@@ -284,7 +277,7 @@ class PdfConversionService
                 return null;
             }
             
-            Log::info('Signature added successfully: ' . $signedPath . ' (total pages: ' . $pageCount . ')');
+            Log::info('Signature added successfully: ' . $signedPath);
             return $signedPath;
             
         } catch (\Exception $e) {
