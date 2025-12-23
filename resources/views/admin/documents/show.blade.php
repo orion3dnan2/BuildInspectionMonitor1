@@ -369,18 +369,27 @@
                 <h2 class="text-lg font-bold text-slate-800">التوقيع الإلكتروني</h2>
             </div>
             <div class="p-6">
-                <div class="border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 mb-4">
-                    <canvas id="signatureCanvas" width="400" height="200" class="w-full cursor-crosshair"></canvas>
-                </div>
-                <div class="flex gap-2 mb-4">
-                    <button onclick="clearSignature()" class="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
-                        مسح التوقيع
-                    </button>
-                </div>
-                <form action="{{ route('admin.documents.sign', $document) }}" method="POST" id="signatureForm">
+                <form action="{{ route('admin.documents.sign', $document) }}" method="POST" enctype="multipart/form-data" id="signatureForm">
                     @csrf
-                    <input type="hidden" name="signature_data" id="signatureData">
-                    <button type="submit" class="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">رفع صورة التوقيع</label>
+                        <div class="border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 p-6 text-center" id="dropZone">
+                            <input type="file" name="signature_image" id="signatureImage" accept="image/png,image/jpeg,image/gif" class="hidden" required>
+                            <div id="uploadPrompt">
+                                <svg class="w-12 h-12 mx-auto text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                                <p class="text-slate-600 mb-2">اضغط لاختيار صورة التوقيع</p>
+                                <p class="text-xs text-slate-400">PNG, JPG, GIF - الحد الأقصى 2MB</p>
+                            </div>
+                            <div id="previewContainer" class="hidden">
+                                <img id="signaturePreview" class="max-h-32 mx-auto rounded border border-slate-200" alt="معاينة التوقيع">
+                                <button type="button" onclick="clearSignatureImage()" class="mt-2 text-sm text-red-500 hover:text-red-700">إزالة الصورة</button>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">سيتم إضافة التوقيع في آخر صفحة من المستند</p>
+                    <button type="submit" class="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed" id="submitBtn" disabled>
                         توقيع المستند
                     </button>
                 </form>
@@ -395,7 +404,7 @@
             </div>
             <div class="p-6">
                 <div class="border border-slate-200 rounded-lg p-4 bg-slate-50">
-                    <img src="{{ $document->signature_data }}" alt="التوقيع" class="max-w-full mx-auto">
+                    <img src="{{ route('admin.documents.signature', $document) }}" alt="التوقيع" class="max-w-full mx-auto max-h-24">
                 </div>
                 <p class="mt-2 text-sm text-slate-500 text-center">
                     {{ $document->signer?->name }} - {{ $document->signed_at?->format('Y/m/d H:i') }}
@@ -408,87 +417,59 @@
 
 @if($document->canBeSigned() && !$document->is_signed)
 <script>
-    const canvas = document.getElementById('signatureCanvas');
-    const ctx = canvas.getContext('2d');
-    let isDrawing = false;
-    let lastX = 0;
-    let lastY = 0;
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('signatureImage');
+    const uploadPrompt = document.getElementById('uploadPrompt');
+    const previewContainer = document.getElementById('previewContainer');
+    const signaturePreview = document.getElementById('signaturePreview');
+    const submitBtn = document.getElementById('submitBtn');
     
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    dropZone.addEventListener('click', () => fileInput.click());
     
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseout', stopDrawing);
-    
-    canvas.addEventListener('touchstart', handleTouch);
-    canvas.addEventListener('touchmove', handleTouch);
-    canvas.addEventListener('touchend', stopDrawing);
-    
-    function startDrawing(e) {
-        isDrawing = true;
-        [lastX, lastY] = getPosition(e);
-    }
-    
-    function draw(e) {
-        if (!isDrawing) return;
+    dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
-        
-        const [x, y] = getPosition(e);
-        
-        ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        
-        [lastX, lastY] = [x, y];
-    }
-    
-    function stopDrawing() {
-        isDrawing = false;
-    }
-    
-    function handleTouch(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    }
-    
-    function getPosition(e) {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        return [
-            (e.clientX - rect.left) * scaleX,
-            (e.clientY - rect.top) * scaleY
-        ];
-    }
-    
-    window.clearSignature = function() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-    
-    document.getElementById('signatureForm').addEventListener('submit', function(e) {
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const isEmpty = !imageData.data.some((channel, index) => {
-            return index % 4 !== 3 ? channel !== 0 : channel !== 0 && channel !== 255;
-        });
-        
-        if (isEmpty) {
-            e.preventDefault();
-            alert('الرجاء رسم التوقيع أولاً');
-            return;
-        }
-        
-        document.getElementById('signatureData').value = canvas.toDataURL('image/png');
+        dropZone.classList.add('border-blue-500', 'bg-blue-50');
     });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) {
+            fileInput.files = files;
+            handleFileSelect(files[0]);
+        }
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+    
+    function handleFileSelect(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            signaturePreview.src = e.target.result;
+            uploadPrompt.classList.add('hidden');
+            previewContainer.classList.remove('hidden');
+            submitBtn.disabled = false;
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    window.clearSignatureImage = function() {
+        fileInput.value = '';
+        signaturePreview.src = '';
+        uploadPrompt.classList.remove('hidden');
+        previewContainer.classList.add('hidden');
+        submitBtn.disabled = true;
+    }
 </script>
 @endif
 @endsection

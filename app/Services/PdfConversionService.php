@@ -5,17 +5,18 @@ namespace App\Services;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\UploadedFile;
-use setasign\Fpdi\Fpdi;
 use PhpOffice\PhpWord\IOFactory as WordIOFactory;
 use PhpOffice\PhpWord\Settings as PhpWordSettings;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use setasign\Fpdi\Tcpdf\Fpdi;
 
 class PdfConversionService
 {
     protected string $uploadPath = 'uploads';
     protected string $pdfPath = 'pdfs';
     protected string $signedPath = 'signed';
+    protected string $signaturesPath = 'signatures';
 
     public function __construct()
     {
@@ -28,6 +29,7 @@ class PdfConversionService
             Storage::path($this->uploadPath),
             Storage::path($this->pdfPath),
             Storage::path($this->signedPath),
+            Storage::path($this->signaturesPath),
         ];
 
         foreach ($directories as $dir) {
@@ -116,8 +118,6 @@ class PdfConversionService
             
         } catch (\Exception $e) {
             Log::error('PhpWord conversion failed: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            
             return $this->convertWordToPdfFallback($fullPath, $outputName);
         }
     }
@@ -138,7 +138,6 @@ class PdfConversionService
             
             $htmlContent = '<html dir="rtl"><head><meta charset="UTF-8"><style>
                 body { font-family: DejaVu Sans, Arial, sans-serif; direction: rtl; text-align: right; }
-                * { unicode-bidi: bidi-override; }
             </style></head><body>' . $htmlContent . '</body></html>';
             
             $options = new Options();
@@ -170,30 +169,50 @@ class PdfConversionService
         }
     }
 
-    public function addSignatureToPdf(string $pdfPath, string $signatureData, array $options = []): ?string
+    public function saveSignatureImage(UploadedFile $file): ?string
+    {
+        $this->ensureDirectoriesExist();
+        
+        $extension = strtolower($file->getClientOriginalExtension());
+        
+        if (!in_array($extension, ['png', 'jpg', 'jpeg', 'gif'])) {
+            Log::error('Invalid signature image format: ' . $extension);
+            return null;
+        }
+        
+        $fileName = 'signature_' . uniqid() . '.' . $extension;
+        $path = $file->storeAs($this->signaturesPath, $fileName);
+        
+        return $path;
+    }
+
+    public function addSignatureToPdf(string $pdfPath, string $signatureImagePath, array $options = []): ?string
     {
         $this->ensureDirectoriesExist();
         
         $fullPdfPath = Storage::path($pdfPath);
+        $fullSignatureImagePath = Storage::path($signatureImagePath);
         
         if (!file_exists($fullPdfPath)) {
             Log::error('PDF file not found: ' . $fullPdfPath);
             return null;
         }
 
-        $signatureImage = $this->saveSignatureImage($signatureData);
-        if (!$signatureImage) {
-            Log::error('Failed to save signature image');
+        if (!file_exists($fullSignatureImagePath)) {
+            Log::error('Signature image not found: ' . $fullSignatureImagePath);
             return null;
         }
 
         try {
             $pdf = new Fpdi();
+            $pdf->setPrintHeader(false);
+            $pdf->setPrintFooter(false);
+            
             $pageCount = $pdf->setSourceFile($fullPdfPath);
             
             $signaturePage = $options['page'] ?? $pageCount;
             $signatureX = $options['x'] ?? 120;
-            $signatureY = $options['y'] ?? 250;
+            $signatureY = $options['y'] ?? 240;
             $signatureWidth = $options['width'] ?? 50;
             
             for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
@@ -204,7 +223,7 @@ class PdfConversionService
                 $pdf->useTemplate($templateId);
                 
                 if ($pageNo == $signaturePage) {
-                    $pdf->Image($signatureImage, $signatureX, $signatureY, $signatureWidth);
+                    $pdf->Image($fullSignatureImagePath, $signatureX, $signatureY, $signatureWidth);
                 }
             }
             
@@ -216,9 +235,7 @@ class PdfConversionService
                 mkdir(dirname($fullSignedPath), 0755, true);
             }
             
-            $pdf->Output('F', $fullSignedPath);
-            
-            @unlink($signatureImage);
+            $pdf->Output($fullSignedPath, 'F');
             
             if (!file_exists($fullSignedPath)) {
                 Log::error('Signed PDF was not created');
@@ -229,31 +246,9 @@ class PdfConversionService
             
         } catch (\Exception $e) {
             Log::error('Failed to add signature to PDF: ' . $e->getMessage());
-            @unlink($signatureImage);
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return null;
         }
-    }
-
-    protected function saveSignatureImage(string $signatureData): ?string
-    {
-        if (strpos($signatureData, 'data:image/png;base64,') === 0) {
-            $signatureData = substr($signatureData, strlen('data:image/png;base64,'));
-        }
-        
-        $imageData = base64_decode($signatureData);
-        if ($imageData === false) {
-            Log::error('Failed to decode signature base64 data');
-            return null;
-        }
-        
-        $tempPath = storage_path('app/temp_signature_' . uniqid() . '.png');
-        
-        if (file_put_contents($tempPath, $imageData) === false) {
-            Log::error('Failed to write signature image to temp file');
-            return null;
-        }
-        
-        return $tempPath;
     }
 
     public function getPdfUrl(string $pdfPath): string

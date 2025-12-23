@@ -143,6 +143,7 @@ Route::middleware('auth')->group(function () {
         Route::get('documents/{document}/print', [DocumentController::class, 'print'])->name('documents.print')->middleware('permission:documents.print');
         Route::get('documents/{document}/pdf', [DocumentController::class, 'viewPdf'])->name('documents.pdf');
         Route::get('documents/{document}/download', [DocumentController::class, 'downloadPdf'])->name('documents.download');
+        Route::get('documents/{document}/signature', [DocumentController::class, 'viewSignature'])->name('documents.signature');
         Route::post('documents/{document}/sign', [DocumentController::class, 'sign'])->name('documents.sign')->middleware('permission:documents.update');
         Route::post('documents/{document}/archive', [DocumentController::class, 'archive'])->name('documents.archive')->middleware('permission:documents.update');
         Route::post('documents/{document}/send-for-review', [DocumentController::class, 'sendForReview'])->name('documents.send-for-review')->middleware('permission:documents.update');

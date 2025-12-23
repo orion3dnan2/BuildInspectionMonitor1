@@ -205,6 +205,21 @@ class DocumentController extends Controller
         return Storage::download($pdfPath, $document->document_number . '.pdf');
     }
 
+    public function viewSignature(Document $document)
+    {
+        if (!$document->signature_data || !Storage::exists($document->signature_data)) {
+            abort(404, 'Signature not found');
+        }
+
+        $content = Storage::get($document->signature_data);
+        $mimeType = Storage::mimeType($document->signature_data);
+        
+        return Response::make($content, 200, [
+            'Content-Type' => $mimeType,
+            'Cache-Control' => 'max-age=86400',
+        ]);
+    }
+
     public function sign(Request $request, Document $document)
     {
         if ($document->is_signed) {
@@ -219,20 +234,27 @@ class DocumentController extends Controller
         }
 
         $validated = $request->validate([
-            'signature_data' => 'required|string',
+            'signature_image' => 'required|image|mimes:png,jpg,jpeg,gif|max:2048',
             'signature_x' => 'nullable|numeric',
             'signature_y' => 'nullable|numeric',
             'signature_page' => 'nullable|integer|min:1',
         ]);
 
+        $signatureImagePath = $this->pdfService->saveSignatureImage($request->file('signature_image'));
+        
+        if (!$signatureImagePath) {
+            return redirect()->route('admin.documents.show', $document)
+                ->with('error', 'فشل في حفظ صورة التوقيع');
+        }
+
         $options = [
             'x' => $validated['signature_x'] ?? 120,
-            'y' => $validated['signature_y'] ?? 250,
+            'y' => $validated['signature_y'] ?? 240,
             'page' => $validated['signature_page'] ?? null,
             'width' => 50,
         ];
 
-        $signedPdfPath = $this->pdfService->addSignatureToPdf($pdfPath, $validated['signature_data'], $options);
+        $signedPdfPath = $this->pdfService->addSignatureToPdf($pdfPath, $signatureImagePath, $options);
 
         if (!$signedPdfPath) {
             return redirect()->route('admin.documents.show', $document)
@@ -241,7 +263,7 @@ class DocumentController extends Controller
 
         $document->update([
             'signed_pdf_path' => $signedPdfPath,
-            'signature_data' => $validated['signature_data'],
+            'signature_data' => $signatureImagePath,
             'is_signed' => true,
             'signed_at' => now(),
             'signed_by' => auth()->id(),
