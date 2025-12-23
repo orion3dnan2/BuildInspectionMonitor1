@@ -105,10 +105,15 @@ class PdfConversionService
         Log::info('Converting with LibreOffice: ' . $fullInputPath);
         
         $javaHome = $this->findJavaHome();
+        $fontconfigFile = storage_path('app/fontconfig/fonts.conf');
+        $fontconfigCache = storage_path('app/fontconfig/cache');
         
         $env = [
             'HOME=' . storage_path('app'),
             'SAL_USE_VCLPLUGIN=svp',
+            'FONTCONFIG_FILE=' . $fontconfigFile,
+            'FONTCONFIG_PATH=' . dirname($fontconfigFile),
+            'XDG_CACHE_HOME=' . storage_path('app/fontconfig'),
         ];
         
         if ($javaHome) {
