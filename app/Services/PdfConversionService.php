@@ -5,8 +5,6 @@ namespace App\Services;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\UploadedFile;
-use PhpOffice\PhpWord\IOFactory as WordIOFactory;
-use Mpdf\Mpdf;
 use setasign\Fpdi\Tcpdf\Fpdi;
 
 class PdfConversionService
@@ -28,6 +26,7 @@ class PdfConversionService
             Storage::path($this->pdfPath),
             Storage::path($this->signedPath),
             Storage::path($this->signaturesPath),
+            storage_path('app/libreoffice_profile'),
         ];
 
         foreach ($directories as $dir) {
@@ -61,13 +60,13 @@ class PdfConversionService
             $result['pdf_path'] = $originalPath;
             $result['message'] = 'PDF file uploaded successfully';
         } elseif (in_array($extension, ['doc', 'docx'])) {
-            $convertedPdf = $this->convertWordToPdf($originalPath, $uniqueName);
+            $convertedPdf = $this->convertWordToPdfWithLibreOffice($originalPath, $uniqueName);
             if ($convertedPdf) {
                 $result['pdf_path'] = $convertedPdf;
                 $result['message'] = 'Word document converted to PDF successfully';
             } else {
                 $result['success'] = false;
-                $result['message'] = 'Failed to convert Word document to PDF';
+                $result['message'] = 'Failed to convert Word document to PDF. Please upload a PDF file directly.';
             }
         } else {
             $result['success'] = false;
@@ -77,10 +76,11 @@ class PdfConversionService
         return $result;
     }
 
-    public function convertWordToPdf(string $storagePath, string $outputName): ?string
+    public function convertWordToPdfWithLibreOffice(string $storagePath, string $outputName): ?string
     {
         $fullPath = Storage::path($storagePath);
         $outputDir = Storage::path($this->pdfPath);
+        $profileDir = storage_path('app/libreoffice_profile');
         
         if (!file_exists($outputDir)) {
             mkdir($outputDir, 0755, true);
@@ -91,116 +91,105 @@ class PdfConversionService
             return null;
         }
 
+        $libreOfficePath = $this->findLibreOffice();
+        if (!$libreOfficePath) {
+            Log::error('LibreOffice not found in system');
+            return null;
+        }
+
         try {
-            Log::info('Starting Word to PDF conversion using PhpWord + mPDF');
+            Log::info('Starting Word to PDF conversion using LibreOffice');
             
-            $phpWord = WordIOFactory::load($fullPath);
+            putenv('HOME=' . storage_path('app'));
+            putenv('SAL_USE_VCLPLUGIN=svp');
             
-            $tempHtmlPath = storage_path('app/temp_' . uniqid() . '.html');
-            $htmlWriter = WordIOFactory::createWriter($phpWord, 'HTML');
-            $htmlWriter->save($tempHtmlPath);
+            $command = sprintf(
+                '%s --headless --nofirststartwizard --norestore ' .
+                '-env:UserInstallation=file://%s ' .
+                '--convert-to pdf:writer_pdf_Export ' .
+                '--outdir %s %s 2>&1',
+                escapeshellcmd($libreOfficePath),
+                escapeshellarg($profileDir),
+                escapeshellarg($outputDir),
+                escapeshellarg($fullPath)
+            );
+
+            Log::info('LibreOffice command: ' . $command);
             
-            $htmlContent = file_get_contents($tempHtmlPath);
-            @unlink($tempHtmlPath);
+            $output = [];
+            $returnCode = 0;
+            exec($command, $output, $returnCode);
             
-            $htmlContent = $this->wrapHtmlForArabic($htmlContent);
+            Log::info('LibreOffice output: ' . implode("\n", $output));
+            Log::info('LibreOffice return code: ' . $returnCode);
+
+            $originalBasename = pathinfo($fullPath, PATHINFO_FILENAME);
+            $expectedPdfPath = $outputDir . '/' . $originalBasename . '.pdf';
             
-            $tempDir = storage_path('app/mpdf_temp');
-            if (!file_exists($tempDir)) {
-                mkdir($tempDir, 0755, true);
-            }
-            
-            $mpdf = new Mpdf([
-                'mode' => 'utf-8',
-                'format' => 'A4',
-                'default_font' => 'dejavusans',
-                'tempDir' => $tempDir,
-                'autoArabic' => true,
-                'autoLangToFont' => true,
-            ]);
-            
-            $mpdf->SetDirectionality('rtl');
-            $mpdf->WriteHTML($htmlContent);
-            
-            $finalPdfName = $outputName . '.pdf';
-            $finalPdfPath = $this->pdfPath . '/' . $finalPdfName;
-            $fullPdfPath = Storage::path($finalPdfPath);
-            
-            $mpdf->Output($fullPdfPath, \Mpdf\Output\Destination::FILE);
-            
-            if (file_exists($fullPdfPath)) {
-                Log::info('Word to PDF conversion successful with mPDF: ' . $finalPdfPath);
+            if (file_exists($expectedPdfPath)) {
+                $finalPdfName = $outputName . '.pdf';
+                $finalPdfPath = $this->pdfPath . '/' . $finalPdfName;
+                $fullFinalPath = Storage::path($finalPdfPath);
+                
+                if ($expectedPdfPath !== $fullFinalPath) {
+                    rename($expectedPdfPath, $fullFinalPath);
+                }
+                
+                Log::info('Word to PDF conversion successful: ' . $finalPdfPath);
                 return $finalPdfPath;
             }
-            
-            Log::error('PDF file was not created after conversion');
+
+            $pdfFiles = glob($outputDir . '/*.pdf');
+            if (!empty($pdfFiles)) {
+                usort($pdfFiles, function($a, $b) {
+                    return filemtime($b) - filemtime($a);
+                });
+                $latestPdf = $pdfFiles[0];
+                $finalPdfName = $outputName . '.pdf';
+                $finalPdfPath = $this->pdfPath . '/' . $finalPdfName;
+                rename($latestPdf, Storage::path($finalPdfPath));
+                Log::info('Word to PDF conversion successful (fallback): ' . $finalPdfPath);
+                return $finalPdfPath;
+            }
+
+            Log::error('PDF file was not created after LibreOffice conversion');
             return null;
             
         } catch (\Exception $e) {
-            Log::error('mPDF conversion failed: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('LibreOffice conversion failed: ' . $e->getMessage());
             return null;
         }
     }
 
-    protected function wrapHtmlForArabic(string $htmlContent): string
+    protected function findLibreOffice(): ?string
     {
-        if (stripos($htmlContent, '<html') === false) {
-            $htmlContent = '<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body {
-            font-family: "DejaVu Sans", "Arial", sans-serif;
-            direction: rtl;
-            text-align: right;
-            line-height: 1.8;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            direction: rtl;
-        }
-        td, th {
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: right;
-        }
-        p {
-            margin: 10px 0;
-        }
-    </style>
-</head>
-<body>' . $htmlContent . '</body></html>';
-        } else {
-            $htmlContent = preg_replace('/<html([^>]*)>/i', '<html$1 dir="rtl" lang="ar">', $htmlContent);
+        $paths = [
+            '/nix/store/s77ki6j3if918jk373md4aajqii531rd-libreoffice-24.8.7.2-wrapped/bin/libreoffice',
+            'libreoffice',
+            'soffice',
+            '/usr/bin/libreoffice',
+            '/usr/bin/soffice',
+        ];
+
+        foreach ($paths as $path) {
+            $output = [];
+            $returnCode = 0;
+            exec('which ' . escapeshellarg($path) . ' 2>/dev/null', $output, $returnCode);
+            if ($returnCode === 0 && !empty($output)) {
+                return trim($output[0]);
+            }
             
-            $styleBlock = '<style>
-                body {
-                    font-family: "DejaVu Sans", "Arial", sans-serif;
-                    direction: rtl;
-                    text-align: right;
-                    line-height: 1.8;
-                }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    direction: rtl;
-                }
-                td, th {
-                    border: 1px solid #000;
-                    padding: 8px;
-                    text-align: right;
-                }
-            </style>';
-            
-            if (stripos($htmlContent, '</head>') !== false) {
-                $htmlContent = str_ireplace('</head>', $styleBlock . '</head>', $htmlContent);
+            if (file_exists($path) && is_executable($path)) {
+                return $path;
             }
         }
-        
-        return $htmlContent;
+
+        exec('which libreoffice 2>/dev/null', $output, $returnCode);
+        if ($returnCode === 0 && !empty($output)) {
+            return trim($output[0]);
+        }
+
+        return null;
     }
 
     public function saveSignatureImage(UploadedFile $file): ?string
