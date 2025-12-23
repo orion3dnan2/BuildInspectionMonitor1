@@ -1,50 +1,70 @@
 @extends('layouts.app')
 
-@section('title', 'تفاصيل المستند')
+@section('title', $document->title)
 
 @section('content')
-<div class="mb-6">
-    <a href="{{ route('admin.documents.index') }}" class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 transition mb-4">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-        </svg>
-        العودة للمستندات
-    </a>
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800">{{ $document->title }}</h1>
-            <p class="text-slate-500 mt-1">{{ $document->document_number }}</p>
-        </div>
-        <div class="flex gap-3">
-            <a href="{{ route('admin.documents.print', $document) }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
+<div class="mb-6 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+        <a href="{{ route('admin.documents.index') }}" class="text-slate-500 hover:text-slate-700 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+        </a>
+        <h1 class="text-2xl font-bold text-slate-800">{{ $document->title }}</h1>
+    </div>
+    <div class="flex items-center gap-2">
+        @if($document->getViewablePdfPath())
+            <a href="{{ route('admin.documents.download', $document) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                طباعة
+                تحميل PDF
             </a>
-            @if(in_array($document->status, ['draft', 'needs_modification']))
+        @endif
+        @if(in_array($document->status, ['draft', 'needs_modification']))
             <a href="{{ route('admin.documents.edit', $document) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                 </svg>
                 تعديل
             </a>
-            @endif
-        </div>
+        @endif
+        <a href="{{ route('admin.documents.print', $document) }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+            </svg>
+            طباعة
+        </a>
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-2 space-y-6">
+@if(session('success'))
+    <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+        {{ session('error') }}
+    </div>
+@endif
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="space-y-6">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-                <h2 class="text-lg font-bold text-slate-800">محتوى المستند</h2>
+            <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+                <h2 class="text-lg font-bold text-slate-800">تفاصيل المستند</h2>
                 @switch($document->status)
                     @case('draft')
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-slate-100 text-slate-800">مسودة</span>
                         @break
+                    @case('under_review')
                     @case('pending_review')
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800">قيد المراجعة</span>
+                        @break
+                    @case('signed')
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">موقّع</span>
                         @break
                     @case('pending_approval')
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-sky-100 text-sky-800">قيد الاعتماد</span>
@@ -58,135 +78,63 @@
                     @case('needs_modification')
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">يحتاج تعديل</span>
                         @break
+                    @case('archived')
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">مؤرشف</span>
+                        @break
                 @endswitch
             </div>
             
-            @if($document->file_path)
-                <div id="documentPreview" class="w-full" style="min-height: 600px; overflow-y: auto; background: #f5f5f5;">
-                    @php
-                        $fileExtension = pathinfo($document->file_path, PATHINFO_EXTENSION);
-                    @endphp
-                    
-                    @if(strtolower($fileExtension) === 'pdf')
-                        <iframe src="{{ Storage::url($document->file_path) }}#toolbar=0" 
-                                width="100%" 
-                                height="600" 
-                                style="border: none; display: block;">
-                        </iframe>
-                    @elseif(strtolower($fileExtension) === 'docx')
-                        <div id="docxContainer" class="p-6 bg-white" style="min-height: 600px;">
-                            <div class="text-center p-6">
-                                <p class="text-slate-600">جاري تحميل الملف...</p>
-                            </div>
-                        </div>
-                        <script>
-                            function loadDocx() {
-                                const fileUrl = '{{ Storage::url($document->file_path) }}';
-                                const container = document.getElementById('docxContainer');
-                                
-                                if (typeof docx === 'undefined') {
-                                    container.innerHTML = `
-                                        <div class="text-center p-6">
-                                            <p class="text-red-600 font-medium">لم يتمكن من تحميل مكتبة عرض المستندات</p>
-                                            <a href="${fileUrl}" download class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition">
-                                                تحميل الملف
-                                            </a>
-                                        </div>
-                                    `;
-                                    return;
-                                }
-                                
-                                fetch(fileUrl)
-                                    .then(response => {
-                                        if (!response.ok) throw new Error('Network response error');
-                                        return response.arrayBuffer();
-                                    })
-                                    .then(buffer => {
-                                        const options = {
-                                            className: 'docx-content',
-                                            style: `
-                                                .docx-content { 
-                                                    font-family: 'Tajawal', Arial, sans-serif; 
-                                                    padding: 20px; 
-                                                    direction: rtl;
-                                                    text-align: right;
-                                                }
-                                                .docx-content p { 
-                                                    margin: 0.5rem 0; 
-                                                    line-height: 1.8;
-                                                    word-break: break-word;
-                                                }
-                                                .docx-content h1, .docx-content h2, .docx-content h3, .docx-content h4, .docx-content h5, .docx-content h6 { 
-                                                    margin: 1rem 0 0.5rem 0; 
-                                                    font-weight: bold; 
-                                                }
-                                                .docx-content table { 
-                                                    border-collapse: collapse; 
-                                                    width: 100%; 
-                                                    margin: 1rem 0; 
-                                                }
-                                                .docx-content td, .docx-content th { 
-                                                    border: 1px solid #ddd; 
-                                                    padding: 8px; 
-                                                    text-align: right; 
-                                                }
-                                                .docx-content th { 
-                                                    background-color: #f5f5f5; 
-                                                    font-weight: bold; 
-                                                }
-                                            `
-                                        };
-                                        return docx.renderAsync(buffer, container, null, options);
-                                    })
-                                    .catch(error => {
-                                        console.error('Error loading DOCX:', error);
-                                        container.innerHTML = `
-                                            <div class="text-center p-6">
-                                                <p class="text-red-600 font-medium">حدث خطأ في تحميل الملف</p>
-                                                <p class="text-slate-600 text-sm mt-2">${error.message}</p>
-                                                <a href="${fileUrl}" download class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                    </svg>
-                                                    تحميل الملف مباشرة
-                                                </a>
-                                            </div>
-                                        `;
-                                    });
-                            }
-                            
-                            if (document.readyState === 'loading') {
-                                document.addEventListener('DOMContentLoaded', loadDocx);
-                            } else {
-                                loadDocx();
-                            }
-                        </script>
-                    @else
-                        <div class="p-6 bg-white text-center">
-                            <p class="text-slate-600">نوع الملف: {{ strtoupper($fileExtension) }}</p>
-                            <p class="text-slate-500 text-sm mt-2">نوع الملف غير مدعوم للعرض المباشر</p>
-                            <a href="{{ Storage::url($document->file_path) }}" download class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                                تحميل الملف
-                            </a>
-                        </div>
-                    @endif
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-sm text-slate-500">رقم المستند</span>
+                        <p class="font-medium text-slate-800">{{ $document->document_number }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-slate-500">النوع</span>
+                        <p class="font-medium text-slate-800">{{ $document->type_label }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-slate-500">الأولوية</span>
+                        <p class="font-medium text-slate-800">{{ $document->priority_label }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-slate-500">القسم</span>
+                        <p class="font-medium text-slate-800">{{ $document->department?->name ?? 'غير محدد' }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-slate-500">منشئ المستند</span>
+                        <p class="font-medium text-slate-800">{{ $document->creator?->name ?? 'غير معروف' }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-slate-500">تاريخ الإنشاء</span>
+                        <p class="font-medium text-slate-800">{{ $document->created_at->format('Y/m/d H:i') }}</p>
+                    </div>
                 </div>
-            @else
-                <div class="p-6">
-                    <div class="prose prose-lg max-w-none text-slate-700 leading-relaxed whitespace-pre-wrap">{{ $document->content }}</div>
-                </div>
-            @endif
 
-            @if($document->signature_data && $document->status === 'approved')
-            <div class="mt-6 pt-6 px-6 pb-6 border-t border-slate-200">
-                <h3 class="text-sm font-medium text-slate-700 mb-2">توقيع المدير</h3>
-                <img src="{{ $document->signature_data }}" alt="التوقيع" class="max-w-xs border border-slate-200 rounded-lg">
-                <p class="mt-2 text-sm text-slate-500">{{ $document->approver?->name }} - {{ $document->approved_at?->format('Y/m/d H:i') }}</p>
+                @if($document->content)
+                <div class="pt-4 border-t border-slate-100">
+                    <span class="text-sm text-slate-500">المحتوى</span>
+                    <div class="mt-2 prose prose-sm max-w-none text-slate-700">
+                        {!! nl2br(e($document->content)) !!}
+                    </div>
+                </div>
+                @endif
+
+                @if($document->is_signed)
+                <div class="pt-4 border-t border-slate-100 bg-blue-50 -mx-6 px-6 py-4 -mb-6">
+                    <div class="flex items-center gap-2 text-blue-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="font-medium">تم التوقيع</span>
+                    </div>
+                    <p class="text-sm text-blue-600 mt-1">
+                        بواسطة: {{ $document->signer?->name ?? 'غير معروف' }} - {{ $document->signed_at?->format('Y/m/d H:i') }}
+                    </p>
+                </div>
+                @endif
             </div>
-            @endif
         </div>
 
         @if($document->rejection_reason)
@@ -205,6 +153,106 @@
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="p-6 border-b border-slate-200">
+                <h2 class="text-lg font-bold text-slate-800">الإجراءات</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                @if($document->status === 'draft')
+                    <form action="{{ route('admin.documents.send-for-review', $document) }}" method="POST" class="space-y-4">
+                        @csrf
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">إرسال للمراجعة إلى</label>
+                            <select name="reviewer_id" required class="w-full rounded-lg border-slate-300 focus:border-sky-500 focus:ring-sky-500">
+                                <option value="">اختر المراجع</option>
+                                @foreach($users as $user)
+                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">ملاحظات (اختياري)</label>
+                            <textarea name="comments" rows="2" class="w-full rounded-lg border-slate-300 focus:border-sky-500 focus:ring-sky-500"></textarea>
+                        </div>
+                        <button type="submit" class="w-full px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition">
+                            إرسال للمراجعة
+                        </button>
+                    </form>
+                @endif
+
+                @if(in_array($document->status, ['under_review', 'pending_review', 'signed']))
+                    <form action="{{ route('admin.documents.send-to-manager', $document) }}" method="POST" class="space-y-4">
+                        @csrf
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">إرسال للمدير للاعتماد</label>
+                            <select name="manager_id" required class="w-full rounded-lg border-slate-300 focus:border-sky-500 focus:ring-sky-500">
+                                <option value="">اختر المدير</option>
+                                @foreach($users as $user)
+                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">ملاحظات (اختياري)</label>
+                            <textarea name="comments" rows="2" class="w-full rounded-lg border-slate-300 focus:border-sky-500 focus:ring-sky-500"></textarea>
+                        </div>
+                        <button type="submit" class="w-full px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition">
+                            إرسال للاعتماد
+                        </button>
+                    </form>
+                @endif
+
+                @if($document->status === 'pending_approval')
+                    <div class="space-y-4">
+                        <form action="{{ route('admin.documents.approve', $document) }}" method="POST" id="approveForm" class="space-y-4">
+                            @csrf
+                            <input type="hidden" name="signature_data" id="approveSignatureData">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">ملاحظات الاعتماد (اختياري)</label>
+                                <textarea name="comments" rows="2" class="w-full rounded-lg border-slate-300 focus:border-sky-500 focus:ring-sky-500"></textarea>
+                            </div>
+                            <button type="submit" class="w-full px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition">
+                                اعتماد المستند
+                            </button>
+                        </form>
+
+                        <form action="{{ route('admin.documents.reject', $document) }}" method="POST" class="space-y-4 pt-4 border-t border-slate-200">
+                            @csrf
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">سبب الرفض</label>
+                                <textarea name="rejection_reason" rows="2" required class="w-full rounded-lg border-slate-300 focus:border-sky-500 focus:ring-sky-500"></textarea>
+                            </div>
+                            <button type="submit" class="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition">
+                                رفض المستند
+                            </button>
+                        </form>
+                    </div>
+                @endif
+
+                @if(in_array($document->status, ['under_review', 'pending_review', 'pending_approval']))
+                    <form action="{{ route('admin.documents.request-modification', $document) }}" method="POST" class="space-y-4 pt-4 border-t border-slate-200">
+                        @csrf
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">طلب تعديل</label>
+                            <textarea name="modification_notes" rows="2" required class="w-full rounded-lg border-slate-300 focus:border-sky-500 focus:ring-sky-500" placeholder="أدخل ملاحظات التعديل المطلوبة"></textarea>
+                        </div>
+                        <button type="submit" class="w-full px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition">
+                            طلب تعديل
+                        </button>
+                    </form>
+                @endif
+
+                @if($document->status === 'approved')
+                    <form action="{{ route('admin.documents.archive', $document) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="w-full px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition" onclick="return confirm('هل أنت متأكد من أرشفة هذا المستند؟')">
+                            أرشفة المستند
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 border-b border-slate-200">
                 <h2 class="text-lg font-bold text-slate-800">سجل سير العمل</h2>
             </div>
             
@@ -215,434 +263,356 @@
                         @switch($workflow->action)
                             @case('submit') bg-sky-100 text-sky-600 @break
                             @case('review') bg-amber-100 text-amber-600 @break
-                            @case('forward') bg-purple-100 text-purple-600 @break
+                            @case('forward') bg-indigo-100 text-indigo-600 @break
+                            @case('sign') bg-blue-100 text-blue-600 @break
                             @case('approve') bg-emerald-100 text-emerald-600 @break
                             @case('reject') bg-red-100 text-red-600 @break
                             @case('request_modification') bg-orange-100 text-orange-600 @break
-                            @case('modify') bg-slate-100 text-slate-600 @break
+                            @case('archive') bg-purple-100 text-purple-600 @break
+                            @default bg-slate-100 text-slate-600
                         @endswitch
                     ">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             @switch($workflow->action)
+                                @case('submit')
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                    @break
                                 @case('approve')
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     @break
                                 @case('reject')
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    @break
+                                @case('sign')
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                                     @break
                                 @default
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
                             @endswitch
                         </svg>
                     </div>
                     <div class="flex-1">
-                        <p class="text-sm text-slate-800">
-                            <span class="font-medium">{{ $workflow->fromUser->name }}</span>
-                            <span class="text-slate-500">{{ $workflow->action_label }}</span>
-                            @if($workflow->action !== 'approve' && $workflow->action !== 'reject')
-                            <span class="text-slate-500">إلى</span>
-                            <span class="font-medium">{{ $workflow->toUser->name }}</span>
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-slate-800">
+                                @switch($workflow->action)
+                                    @case('submit') إرسال للمراجعة @break
+                                    @case('review') مراجعة @break
+                                    @case('forward') تحويل @break
+                                    @case('sign') توقيع @break
+                                    @case('approve') اعتماد @break
+                                    @case('reject') رفض @break
+                                    @case('request_modification') طلب تعديل @break
+                                    @case('archive') أرشفة @break
+                                    @default {{ $workflow->action }}
+                                @endswitch
+                            </span>
+                            <span class="text-sm text-slate-500">{{ $workflow->created_at->format('Y/m/d H:i') }}</span>
+                        </div>
+                        <p class="text-sm text-slate-600 mt-1">
+                            من: {{ $workflow->fromUser?->name ?? 'غير معروف' }}
+                            @if($workflow->toUser)
+                                → إلى: {{ $workflow->toUser->name }}
                             @endif
                         </p>
                         @if($workflow->comments)
-                        <p class="mt-1 text-sm text-slate-600">{{ $workflow->comments }}</p>
-                        @endif
-                        <p class="mt-1 text-xs text-slate-400">{{ $workflow->created_at->format('Y/m/d H:i') }}</p>
-                    </div>
-                    <div>
-                        @if($workflow->status === 'completed')
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">مكتمل</span>
-                        @else
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">معلق</span>
+                            <p class="text-sm text-slate-500 mt-1 bg-slate-50 rounded p-2">{{ $workflow->comments }}</p>
                         @endif
                     </div>
                 </div>
                 @empty
                 <div class="p-6 text-center text-slate-500">
-                    لا يوجد سجل لسير العمل
+                    لا يوجد سجل سير عمل حتى الآن
                 </div>
                 @endforelse
             </div>
         </div>
     </div>
 
-    <div class="lg:col-span-1 space-y-6">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <h2 class="text-lg font-bold text-slate-800 mb-4">معلومات المستند</h2>
+    <div class="space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+                <h2 class="text-lg font-bold text-slate-800">عرض المستند</h2>
+                <div class="flex items-center gap-2">
+                    <button onclick="zoomOut()" class="p-2 hover:bg-slate-100 rounded-lg transition" title="تصغير">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path>
+                        </svg>
+                    </button>
+                    <span id="zoomLevel" class="text-sm text-slate-600">100%</span>
+                    <button onclick="zoomIn()" class="p-2 hover:bg-slate-100 rounded-lg transition" title="تكبير">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
             
-            <dl class="space-y-4">
-                <div>
-                    <dt class="text-sm text-slate-500">النوع</dt>
-                    <dd class="text-base font-medium text-slate-800">{{ $document->type_label }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm text-slate-500">الأولوية</dt>
-                    <dd>
-                        @switch($document->priority)
-                            @case('low')
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">منخفضة</span>
-                                @break
-                            @case('normal')
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-800">عادية</span>
-                                @break
-                            @case('high')
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">عالية</span>
-                                @break
-                            @case('urgent')
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">عاجلة</span>
-                                @break
-                        @endswitch
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm text-slate-500">المنشئ</dt>
-                    <dd class="text-base font-medium text-slate-800">{{ $document->creator?->name ?? '-' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm text-slate-500">القسم</dt>
-                    <dd class="text-base font-medium text-slate-800">{{ $document->department?->name ?? 'غير محدد' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm text-slate-500">تاريخ الإنشاء</dt>
-                    <dd class="text-base font-medium text-slate-800">{{ $document->created_at->format('Y/m/d H:i') }}</dd>
-                </div>
-                @if($document->approved_at)
-                <div>
-                    <dt class="text-sm text-slate-500">تاريخ الاعتماد</dt>
-                    <dd class="text-base font-medium text-slate-800">{{ $document->approved_at->format('Y/m/d H:i') }}</dd>
-                </div>
-                @endif
-                @if($document->file_path)
-                <div>
-                    <dt class="text-sm text-slate-500">المرفق</dt>
-                    <dd class="space-y-2">
-                        <button onclick="openFileViewer('{{ Storage::url($document->file_path) }}', '{{ pathinfo($document->file_path, PATHINFO_EXTENSION) }}')" class="inline-flex items-center gap-2 px-3 py-2 bg-sky-100 hover:bg-sky-200 text-sky-700 rounded-lg transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
-                            عرض الملف
-                        </button>
-                        <a href="{{ Storage::url($document->file_path) }}" download class="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            تحميل
-                        </a>
-                    </dd>
-                </div>
-                @endif
-            </dl>
-        </div>
-
-        @if($document->status === 'draft' && $document->created_by === auth()->id())
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <h2 class="text-lg font-bold text-slate-800 mb-4">إرسال للمراجعة</h2>
-            <form action="{{ route('admin.documents.send-for-review', $document) }}" method="POST">
-                @csrf
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">المراجع</label>
-                    <select name="reviewer_id" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
-                        <option value="">-- اختر المراجع --</option>
-                        @foreach(\App\Models\User::where('role', '!=', 'user')->where('id', '!=', auth()->id())->get() as $user)
-                        <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->role_name }})</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">ملاحظات</label>
-                    <textarea name="comments" rows="3" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"></textarea>
-                </div>
-                <button type="submit" class="w-full px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition">
-                    إرسال للمراجعة
-                </button>
-            </form>
-        </div>
-        @endif
-
-        @if($document->status === 'pending_review' && $document->assigned_to === auth()->id())
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <h2 class="text-lg font-bold text-slate-800 mb-4">إجراءات المراجعة</h2>
-            
-            <form action="{{ route('admin.documents.send-to-manager', $document) }}" method="POST" class="mb-4">
-                @csrf
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">المدير</label>
-                    <select name="manager_id" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
-                        <option value="">-- اختر المدير --</option>
-                        @foreach(\App\Models\User::where('role', 'admin')->get() as $user)
-                        <option value="{{ $user->id }}">{{ $user->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">ملاحظات</label>
-                    <textarea name="comments" rows="2" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"></textarea>
-                </div>
-                <button type="submit" class="w-full px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition">
-                    إرسال للمدير للاعتماد
-                </button>
-            </form>
-
-            <hr class="my-4">
-
-            <form action="{{ route('admin.documents.request-modification', $document) }}" method="POST">
-                @csrf
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">ملاحظات التعديل</label>
-                    <textarea name="modification_notes" rows="3" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500" placeholder="اذكر التعديلات المطلوبة..."></textarea>
-                </div>
-                <button type="submit" class="w-full px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition">
-                    طلب تعديل
-                </button>
-            </form>
-        </div>
-        @endif
-
-        @if($document->status === 'pending_approval' && $document->assigned_to === auth()->id())
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <h2 class="text-lg font-bold text-slate-800 mb-4">اعتماد المستند</h2>
-            
-            <form action="{{ route('admin.documents.approve', $document) }}" method="POST" id="approveForm">
-                @csrf
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">التوقيع الإلكتروني</label>
-                    <div class="border-2 border-dashed border-slate-300 rounded-lg p-4">
-                        <canvas id="signatureCanvas" width="300" height="150" class="w-full bg-white rounded cursor-crosshair"></canvas>
-                        <input type="hidden" name="signature_data" id="signatureData">
+            @if($document->getViewablePdfPath())
+            <div id="pdfViewerContainer" class="relative bg-slate-100" style="height: 600px; overflow: auto;">
+                <div id="pdfViewer" class="flex flex-col items-center py-4 gap-4"></div>
+                <div id="pdfLoading" class="absolute inset-0 flex items-center justify-center bg-white">
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500 mx-auto"></div>
+                        <p class="mt-4 text-slate-600">جاري تحميل المستند...</p>
                     </div>
-                    <button type="button" onclick="clearSignature()" class="mt-2 text-sm text-slate-500 hover:text-slate-700">مسح التوقيع</button>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">ملاحظات</label>
-                    <textarea name="comments" rows="2" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"></textarea>
-                </div>
-                <button type="submit" class="w-full px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition">
-                    اعتماد المستند
+            </div>
+            
+            <div class="p-4 border-t border-slate-200 flex items-center justify-center gap-4">
+                <button onclick="prevPage()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    السابق
                 </button>
-            </form>
-
-            <hr class="my-4">
-
-            <form action="{{ route('admin.documents.reject', $document) }}" method="POST">
-                @csrf
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">سبب الرفض</label>
-                    <textarea name="rejection_reason" rows="3" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"></textarea>
-                </div>
-                <button type="submit" class="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition">
-                    رفض المستند
+                <span class="text-slate-600">
+                    صفحة <span id="currentPage">1</span> من <span id="totalPages">1</span>
+                </span>
+                <button onclick="nextPage()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition flex items-center gap-2">
+                    التالي
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
                 </button>
-            </form>
-
-            <hr class="my-4">
-
-            <form action="{{ route('admin.documents.request-modification', $document) }}" method="POST">
-                @csrf
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">ملاحظات التعديل</label>
-                    <textarea name="modification_notes" rows="3" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500" placeholder="اذكر التعديلات المطلوبة..."></textarea>
-                </div>
-                <button type="submit" class="w-full px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition">
-                    طلب تعديل
-                </button>
-            </form>
-        </div>
-        @endif
-    </div>
-</div>
-@endsection
-
-<!-- File Viewer Modal -->
-<div id="fileViewerModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-        <div class="flex items-center justify-between p-4 border-b border-slate-200">
-            <h3 class="text-lg font-bold text-slate-800">عرض الملف</h3>
-            <button onclick="closeFileViewer()" class="p-2 hover:bg-slate-100 rounded-lg transition">
-                <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </div>
+            @else
+            <div class="p-12 text-center">
+                <svg class="w-16 h-16 mx-auto text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-            </button>
+                <p class="mt-4 text-slate-500">لا يوجد ملف PDF مرفق</p>
+            </div>
+            @endif
         </div>
-        <div id="fileViewerContent" class="flex-1 overflow-auto bg-slate-50">
-            <!-- Content will be inserted here -->
+
+        @if($document->canBeSigned() && !$document->is_signed)
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 border-b border-slate-200">
+                <h2 class="text-lg font-bold text-slate-800">التوقيع الإلكتروني</h2>
+            </div>
+            <div class="p-6">
+                <div class="border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 mb-4">
+                    <canvas id="signatureCanvas" width="400" height="200" class="w-full cursor-crosshair"></canvas>
+                </div>
+                <div class="flex gap-2 mb-4">
+                    <button onclick="clearSignature()" class="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+                        مسح التوقيع
+                    </button>
+                </div>
+                <form action="{{ route('admin.documents.sign', $document) }}" method="POST" id="signatureForm">
+                    @csrf
+                    <input type="hidden" name="signature_data" id="signatureData">
+                    <button type="submit" class="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition">
+                        توقيع المستند
+                    </button>
+                </form>
+            </div>
         </div>
+        @endif
+
+        @if($document->signature_data && $document->is_signed)
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 border-b border-slate-200">
+                <h2 class="text-lg font-bold text-slate-800">التوقيع</h2>
+            </div>
+            <div class="p-6">
+                <div class="border border-slate-200 rounded-lg p-4 bg-slate-50">
+                    <img src="{{ $document->signature_data }}" alt="التوقيع" class="max-w-full mx-auto">
+                </div>
+                <p class="mt-2 text-sm text-slate-500 text-center">
+                    {{ $document->signer?->name }} - {{ $document->signed_at?->format('Y/m/d H:i') }}
+                </p>
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 
-@push('scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/docx-preview@0.1.38/build/index.umd.js"></script>
-<script>
-let canvas, ctx, isDrawing = false, lastX = 0, lastY = 0;
-
-function openFileViewer(fileUrl, extension) {
-    const modal = document.getElementById('fileViewerModal');
-    const content = document.getElementById('fileViewerContent');
-    extension = extension.toLowerCase();
-
-    // Clear previous content
-    content.innerHTML = '';
-
-    if (extension === 'pdf') {
-        // Use PDF.js to display PDF
-        content.innerHTML = `
-            <div class="flex items-center justify-center h-full">
-                <iframe src="${fileUrl}#toolbar=0" width="100%" height="100%" style="border: none; min-height: 600px;"></iframe>
-            </div>
-        `;
-    } else if (extension === 'docx') {
-        // Use docx-preview for Word documents
-        content.innerHTML = `
-            <div class="p-6 bg-white">
-                <div id="docxContainer" class="prose prose-lg max-w-none"></div>
-                <div class="mt-4 text-center">
-                    <p class="text-sm text-slate-500 mb-2">جاري تحميل الملف...</p>
-                </div>
-            </div>
-        `;
-        
-        // Fetch and render DOCX
-        fetch(fileUrl)
-            .then(response => response.arrayBuffer())
-            .then(buffer => {
-                const options = {
-                    className: 'docx-container',
-                    style: `
-                        .docx-container { max-width: 100%; padding: 20px; }
-                        .docx-container p { margin: 0.5rem 0; }
-                        .docx-container table { border-collapse: collapse; width: 100%; }
-                        .docx-container td, .docx-container th { border: 1px solid #ddd; padding: 8px; }
-                    `
-                };
-                docx.renderAsync(buffer, document.getElementById('docxContainer'), null, options);
-            })
-            .catch(error => {
-                document.getElementById('docxContainer').innerHTML = `
-                    <div class="text-center p-6">
-                        <p class="text-red-600 font-medium">حدث خطأ في تحميل الملف</p>
-                        <p class="text-slate-600 text-sm mt-2">يرجى تحميل الملف مباشرة</p>
-                    </div>
-                `;
-                console.error('Error loading DOCX:', error);
-            });
-    } else if (extension === 'doc') {
-        // For old .doc files, offer download only
-        content.innerHTML = `
-            <div class="flex items-center justify-center h-full">
-                <div class="text-center">
-                    <svg class="w-16 h-16 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    <h4 class="text-lg font-medium text-slate-800 mb-2">صيغة Word قديمة</h4>
-                    <p class="text-slate-600 mb-4">النظام يدعم ملفات DOCX فقط (Word 2007 وما بعده)</p>
-                    <a href="${fileUrl}" download class="inline-flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        تحميل الملف
-                    </a>
-                </div>
-            </div>
-        `;
-    } else {
-        // Unsupported format
-        content.innerHTML = `
-            <div class="flex items-center justify-center h-full">
-                <div class="text-center">
-                    <svg class="w-16 h-16 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    <h4 class="text-lg font-medium text-slate-800 mb-2">صيغة الملف غير مدعومة</h4>
-                    <p class="text-slate-600 mb-4">يدعم النظام عرض ملفات PDF و DOCX فقط</p>
-                    <a href="${fileUrl}" download class="inline-flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        تحميل الملف
-                    </a>
-                </div>
-            </div>
-        `;
-    }
-
-    modal.classList.remove('hidden');
-}
-
-function closeFileViewer() {
-    const modal = document.getElementById('fileViewerModal');
-    modal.classList.add('hidden');
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    canvas = document.getElementById('signatureCanvas');
-    if (!canvas) return;
+@if($document->getViewablePdfPath())
+<script src="/pdfjs/build/pdf.mjs" type="module"></script>
+<script type="module">
+    const pdfjsLib = await import('/pdfjs/build/pdf.mjs');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/build/pdf.worker.mjs';
     
-    ctx = canvas.getContext('2d');
+    let pdfDoc = null;
+    let currentPage = 1;
+    let scale = 1.0;
+    let renderedPages = [];
+    
+    const pdfUrl = '{{ route("admin.documents.pdf", $document) }}';
+    
+    async function loadPdf() {
+        try {
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            pdfDoc = await loadingTask.promise;
+            
+            document.getElementById('totalPages').textContent = pdfDoc.numPages;
+            document.getElementById('pdfLoading').style.display = 'none';
+            
+            renderAllPages();
+        } catch (error) {
+            console.error('Error loading PDF:', error);
+            document.getElementById('pdfLoading').innerHTML = `
+                <div class="text-center p-6">
+                    <p class="text-red-600 font-medium">حدث خطأ في تحميل المستند</p>
+                    <p class="text-slate-500 text-sm mt-2">${error.message}</p>
+                </div>
+            `;
+        }
+    }
+    
+    async function renderPage(pageNum) {
+        const page = await pdfDoc.getPage(pageNum);
+        const viewport = page.getViewport({ scale: scale });
+        
+        const canvas = document.createElement('canvas');
+        canvas.className = 'shadow-lg';
+        canvas.id = `page-${pageNum}`;
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        
+        const context = canvas.getContext('2d');
+        
+        await page.render({
+            canvasContext: context,
+            viewport: viewport
+        }).promise;
+        
+        return canvas;
+    }
+    
+    async function renderAllPages() {
+        const viewer = document.getElementById('pdfViewer');
+        viewer.innerHTML = '';
+        renderedPages = [];
+        
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const canvas = await renderPage(i);
+            viewer.appendChild(canvas);
+            renderedPages.push(canvas);
+        }
+    }
+    
+    window.prevPage = function() {
+        if (currentPage <= 1) return;
+        currentPage--;
+        document.getElementById('currentPage').textContent = currentPage;
+        scrollToPage(currentPage);
+    }
+    
+    window.nextPage = function() {
+        if (currentPage >= pdfDoc.numPages) return;
+        currentPage++;
+        document.getElementById('currentPage').textContent = currentPage;
+        scrollToPage(currentPage);
+    }
+    
+    function scrollToPage(pageNum) {
+        const canvas = document.getElementById(`page-${pageNum}`);
+        if (canvas) {
+            canvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+    
+    window.zoomIn = function() {
+        scale = Math.min(scale + 0.25, 3.0);
+        document.getElementById('zoomLevel').textContent = Math.round(scale * 100) + '%';
+        renderAllPages();
+    }
+    
+    window.zoomOut = function() {
+        scale = Math.max(scale - 0.25, 0.5);
+        document.getElementById('zoomLevel').textContent = Math.round(scale * 100) + '%';
+        renderAllPages();
+    }
+    
+    loadPdf();
+</script>
+@endif
+
+@if($document->canBeSigned() && !$document->is_signed)
+<script>
+    const canvas = document.getElementById('signatureCanvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+    
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
-
+    ctx.lineJoin = 'round';
+    
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseout', stopDrawing);
-
+    
     canvas.addEventListener('touchstart', handleTouch);
     canvas.addEventListener('touchmove', handleTouch);
     canvas.addEventListener('touchend', stopDrawing);
-
-    document.getElementById('approveForm')?.addEventListener('submit', function(e) {
-        document.getElementById('signatureData').value = canvas.toDataURL();
-    });
-
-    // Close modal when clicking outside
-    document.getElementById('fileViewerModal')?.addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeFileViewer();
-        }
-    });
-});
-
-function startDrawing(e) {
-    isDrawing = true;
-    [lastX, lastY] = [e.offsetX, e.offsetY];
-}
-
-function draw(e) {
-    if (!isDrawing) return;
-    ctx.beginPath();
-    ctx.moveTo(lastX, lastY);
-    ctx.lineTo(e.offsetX, e.offsetY);
-    ctx.stroke();
-    [lastX, lastY] = [e.offsetX, e.offsetY];
-}
-
-function stopDrawing() {
-    isDrawing = false;
-}
-
-function handleTouch(e) {
-    e.preventDefault();
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
     
-    if (e.type === 'touchstart') {
+    function startDrawing(e) {
         isDrawing = true;
-        [lastX, lastY] = [x, y];
-    } else if (e.type === 'touchmove' && isDrawing) {
+        [lastX, lastY] = getPosition(e);
+    }
+    
+    function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+        
+        const [x, y] = getPosition(e);
+        
         ctx.beginPath();
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(x, y);
         ctx.stroke();
+        
         [lastX, lastY] = [x, y];
     }
-}
-
-function clearSignature() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
+    
+    function stopDrawing() {
+        isDrawing = false;
+    }
+    
+    function handleTouch(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+    
+    function getPosition(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return [
+            (e.clientX - rect.left) * scaleX,
+            (e.clientY - rect.top) * scaleY
+        ];
+    }
+    
+    window.clearSignature = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    document.getElementById('signatureForm').addEventListener('submit', function(e) {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const isEmpty = !imageData.data.some((channel, index) => {
+            return index % 4 !== 3 ? channel !== 0 : channel !== 0 && channel !== 255;
+        });
+        
+        if (isEmpty) {
+            e.preventDefault();
+            alert('الرجاء رسم التوقيع أولاً');
+            return;
+        }
+        
+        document.getElementById('signatureData').value = canvas.toDataURL('image/png');
+    });
 </script>
-@endpush
+@endif
+@endsection

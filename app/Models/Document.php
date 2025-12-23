@@ -28,11 +28,31 @@ class Document extends Model
         'approved_by',
         'signature_data',
         'file_path',
+        'original_file_path',
+        'pdf_path',
+        'signed_pdf_path',
+        'is_signed',
+        'signed_at',
+        'signed_by',
+        'archived_at',
     ];
 
     protected $casts = [
         'approved_at' => 'datetime',
+        'signed_at' => 'datetime',
+        'archived_at' => 'datetime',
+        'is_signed' => 'boolean',
     ];
+
+    const STATUS_DRAFT = 'draft';
+    const STATUS_UNDER_REVIEW = 'under_review';
+    const STATUS_SIGNED = 'signed';
+    const STATUS_APPROVED = 'approved';
+    const STATUS_ARCHIVED = 'archived';
+    const STATUS_PENDING_REVIEW = 'pending_review';
+    const STATUS_PENDING_APPROVAL = 'pending_approval';
+    const STATUS_REJECTED = 'rejected';
+    const STATUS_NEEDS_MODIFICATION = 'needs_modification';
 
     protected static function boot()
     {
@@ -65,6 +85,11 @@ class Document extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    public function signer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'signed_by');
+    }
+
     public function workflows(): HasMany
     {
         return $this->hasMany(DocumentWorkflow::class);
@@ -74,11 +99,14 @@ class Document extends Model
     {
         return match($this->status) {
             'draft' => 'مسودة',
+            'under_review' => 'قيد المراجعة',
             'pending_review' => 'قيد المراجعة',
+            'signed' => 'موقّع',
             'pending_approval' => 'قيد الاعتماد',
             'approved' => 'معتمد',
             'rejected' => 'مرفوض',
             'needs_modification' => 'يحتاج تعديل',
+            'archived' => 'مؤرشف',
             default => $this->status,
         };
     }
@@ -113,5 +141,32 @@ class Document extends Model
             $q->where('document_number', 'like', "%{$search}%")
               ->orWhere('title', 'like', "%{$search}%");
         });
+    }
+
+    public function getViewablePdfPath(): ?string
+    {
+        if ($this->signed_pdf_path) {
+            return $this->signed_pdf_path;
+        }
+        if ($this->pdf_path) {
+            return $this->pdf_path;
+        }
+        if ($this->file_path && strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION)) === 'pdf') {
+            return $this->file_path;
+        }
+        return null;
+    }
+
+    public function canBeSigned(): bool
+    {
+        return !$this->is_signed && 
+               in_array($this->status, ['draft', 'under_review', 'pending_review', 'pending_approval']) &&
+               $this->getViewablePdfPath() !== null;
+    }
+
+    public function canBeApproved(): bool
+    {
+        return $this->is_signed && 
+               in_array($this->status, ['signed', 'pending_approval']);
     }
 }

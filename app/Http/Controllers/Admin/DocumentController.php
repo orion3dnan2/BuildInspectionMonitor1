@@ -8,11 +8,20 @@ use App\Models\DocumentWorkflow;
 use App\Models\Department;
 use App\Models\Notification;
 use App\Models\User;
+use App\Services\PdfConversionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
 
 class DocumentController extends Controller
 {
+    protected PdfConversionService $pdfService;
+
+    public function __construct(PdfConversionService $pdfService)
+    {
+        $this->pdfService = $pdfService;
+    }
+
     public function index(Request $request)
     {
         $query = Document::with(['department', 'creator', 'assignedUser']);
@@ -50,17 +59,27 @@ class DocumentController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|in:letter,memo,report,decision,circular,other',
-            'content' => 'required|string',
+            'content' => 'nullable|string',
             'department_id' => 'nullable|exists:departments,id',
             'priority' => 'required|in:low,normal,high,urgent',
-            'file' => 'nullable|file|mimes:doc,docx,pdf,rtf|max:10240',
+            'file' => 'nullable|file|mimes:doc,docx,pdf|max:10240',
         ]);
 
         $validated['created_by'] = auth()->id();
         $validated['status'] = 'draft';
 
         if ($request->hasFile('file')) {
-            $validated['file_path'] = $request->file('file')->store('documents', 'public');
+            $result = $this->pdfService->uploadAndConvert($request->file('file'));
+            
+            if ($result['success']) {
+                $validated['original_file_path'] = $result['original_file_path'];
+                $validated['pdf_path'] = $result['pdf_path'];
+                $validated['file_path'] = $result['pdf_path'];
+            } else {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', $result['message']);
+            }
         }
 
         Document::create($validated);
@@ -71,8 +90,9 @@ class DocumentController extends Controller
 
     public function show(Document $document)
     {
-        $document->load(['department', 'creator', 'assignedUser', 'approver', 'workflows.fromUser', 'workflows.toUser']);
-        return view('admin.documents.show', compact('document'));
+        $document->load(['department', 'creator', 'assignedUser', 'approver', 'signer', 'workflows.fromUser', 'workflows.toUser']);
+        $users = User::where('is_active', true)->orderBy('name')->get();
+        return view('admin.documents.show', compact('document', 'users'));
     }
 
     public function edit(Document $document)
@@ -96,17 +116,31 @@ class DocumentController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|in:letter,memo,report,decision,circular,other',
-            'content' => 'required|string',
+            'content' => 'nullable|string',
             'department_id' => 'nullable|exists:departments,id',
             'priority' => 'required|in:low,normal,high,urgent',
-            'file' => 'nullable|file|mimes:doc,docx,pdf,rtf|max:10240',
+            'file' => 'nullable|file|mimes:doc,docx,pdf|max:10240',
         ]);
 
         if ($request->hasFile('file')) {
-            if ($document->file_path) {
-                Storage::disk('public')->delete($document->file_path);
+            if ($document->original_file_path) {
+                Storage::delete($document->original_file_path);
             }
-            $validated['file_path'] = $request->file('file')->store('documents', 'public');
+            if ($document->pdf_path && $document->pdf_path !== $document->original_file_path) {
+                Storage::delete($document->pdf_path);
+            }
+
+            $result = $this->pdfService->uploadAndConvert($request->file('file'));
+            
+            if ($result['success']) {
+                $validated['original_file_path'] = $result['original_file_path'];
+                $validated['pdf_path'] = $result['pdf_path'];
+                $validated['file_path'] = $result['pdf_path'];
+            } else {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', $result['message']);
+            }
         }
 
         if ($document->status === 'needs_modification') {
@@ -127,14 +161,105 @@ class DocumentController extends Controller
                 ->with('error', 'لا يمكن حذف مستند غير مسودة');
         }
 
-        if ($document->file_path) {
-            Storage::disk('public')->delete($document->file_path);
+        if ($document->original_file_path) {
+            Storage::delete($document->original_file_path);
+        }
+        if ($document->pdf_path && $document->pdf_path !== $document->original_file_path) {
+            Storage::delete($document->pdf_path);
+        }
+        if ($document->signed_pdf_path) {
+            Storage::delete($document->signed_pdf_path);
         }
 
         $document->delete();
 
         return redirect()->route('admin.documents.index')
             ->with('success', 'تم حذف المستند بنجاح');
+    }
+
+    public function viewPdf(Document $document)
+    {
+        $pdfPath = $document->getViewablePdfPath();
+        
+        if (!$pdfPath || !Storage::exists($pdfPath)) {
+            abort(404, 'PDF not found');
+        }
+
+        $content = Storage::get($pdfPath);
+        
+        return Response::make($content, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $document->document_number . '.pdf"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+        ]);
+    }
+
+    public function downloadPdf(Document $document)
+    {
+        $pdfPath = $document->getViewablePdfPath();
+        
+        if (!$pdfPath || !Storage::exists($pdfPath)) {
+            abort(404, 'PDF not found');
+        }
+
+        return Storage::download($pdfPath, $document->document_number . '.pdf');
+    }
+
+    public function sign(Request $request, Document $document)
+    {
+        if ($document->is_signed) {
+            return redirect()->route('admin.documents.show', $document)
+                ->with('error', 'المستند موقّع مسبقاً');
+        }
+
+        $pdfPath = $document->getViewablePdfPath();
+        if (!$pdfPath) {
+            return redirect()->route('admin.documents.show', $document)
+                ->with('error', 'لا يوجد ملف PDF للتوقيع');
+        }
+
+        $validated = $request->validate([
+            'signature_data' => 'required|string',
+            'signature_x' => 'nullable|numeric',
+            'signature_y' => 'nullable|numeric',
+            'signature_page' => 'nullable|integer|min:1',
+        ]);
+
+        $options = [
+            'x' => $validated['signature_x'] ?? 120,
+            'y' => $validated['signature_y'] ?? 250,
+            'page' => $validated['signature_page'] ?? null,
+            'width' => 50,
+        ];
+
+        $signedPdfPath = $this->pdfService->addSignatureToPdf($pdfPath, $validated['signature_data'], $options);
+
+        if (!$signedPdfPath) {
+            return redirect()->route('admin.documents.show', $document)
+                ->with('error', 'فشل في إضافة التوقيع إلى المستند');
+        }
+
+        $document->update([
+            'signed_pdf_path' => $signedPdfPath,
+            'signature_data' => $validated['signature_data'],
+            'is_signed' => true,
+            'signed_at' => now(),
+            'signed_by' => auth()->id(),
+            'status' => 'signed',
+        ]);
+
+        DocumentWorkflow::create([
+            'document_id' => $document->id,
+            'from_user_id' => auth()->id(),
+            'to_user_id' => $document->created_by,
+            'action' => 'sign',
+            'comments' => 'تم توقيع المستند',
+            'status' => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        return redirect()->route('admin.documents.show', $document)
+            ->with('success', 'تم توقيع المستند بنجاح');
     }
 
     public function sendForReview(Request $request, Document $document)
@@ -150,7 +275,7 @@ class DocumentController extends Controller
         ]);
 
         $document->update([
-            'status' => 'pending_review',
+            'status' => 'under_review',
             'assigned_to' => $validated['reviewer_id'],
         ]);
 
@@ -171,7 +296,7 @@ class DocumentController extends Controller
 
     public function sendToManager(Request $request, Document $document)
     {
-        if ($document->status !== 'pending_review') {
+        if (!in_array($document->status, ['under_review', 'pending_review', 'signed'])) {
             return redirect()->route('admin.documents.show', $document)
                 ->with('error', 'المستند ليس قيد المراجعة');
         }
@@ -213,7 +338,7 @@ class DocumentController extends Controller
         }
 
         $validated = $request->validate([
-            'signature_data' => 'required|string',
+            'signature_data' => 'nullable|string',
             'comments' => 'nullable|string',
         ]);
 
@@ -221,13 +346,28 @@ class DocumentController extends Controller
             ->where('status', 'pending')
             ->update(['status' => 'completed', 'completed_at' => now()]);
 
-        $document->update([
+        $updateData = [
             'status' => 'approved',
             'approved_by' => auth()->id(),
             'approved_at' => now(),
-            'signature_data' => $validated['signature_data'],
             'assigned_to' => null,
-        ]);
+        ];
+
+        if (!empty($validated['signature_data']) && !$document->is_signed) {
+            $pdfPath = $document->getViewablePdfPath();
+            if ($pdfPath) {
+                $signedPdfPath = $this->pdfService->addSignatureToPdf($pdfPath, $validated['signature_data']);
+                if ($signedPdfPath) {
+                    $updateData['signed_pdf_path'] = $signedPdfPath;
+                    $updateData['signature_data'] = $validated['signature_data'];
+                    $updateData['is_signed'] = true;
+                    $updateData['signed_at'] = now();
+                    $updateData['signed_by'] = auth()->id();
+                }
+            }
+        }
+
+        $document->update($updateData);
 
         DocumentWorkflow::create([
             'document_id' => $document->id,
@@ -284,7 +424,7 @@ class DocumentController extends Controller
 
     public function requestModification(Request $request, Document $document)
     {
-        if (!in_array($document->status, ['pending_review', 'pending_approval'])) {
+        if (!in_array($document->status, ['under_review', 'pending_review', 'pending_approval'])) {
             return redirect()->route('admin.documents.show', $document)
                 ->with('error', 'لا يمكن طلب تعديل في هذه الحالة');
         }
@@ -318,11 +458,37 @@ class DocumentController extends Controller
             ->with('success', 'تم إرسال طلب التعديل');
     }
 
+    public function archive(Document $document)
+    {
+        if ($document->status !== 'approved') {
+            return redirect()->route('admin.documents.show', $document)
+                ->with('error', 'يجب أن يكون المستند معتمداً للأرشفة');
+        }
+
+        $document->update([
+            'status' => 'archived',
+            'archived_at' => now(),
+        ]);
+
+        DocumentWorkflow::create([
+            'document_id' => $document->id,
+            'from_user_id' => auth()->id(),
+            'to_user_id' => $document->created_by,
+            'action' => 'archive',
+            'comments' => 'تم أرشفة المستند',
+            'status' => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        return redirect()->route('admin.documents.show', $document)
+            ->with('success', 'تم أرشفة المستند بنجاح');
+    }
+
     public function inbox()
     {
         $documents = Document::with(['department', 'creator'])
             ->where('assigned_to', auth()->id())
-            ->whereIn('status', ['pending_review', 'pending_approval', 'needs_modification'])
+            ->whereIn('status', ['under_review', 'pending_review', 'pending_approval', 'needs_modification'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -341,7 +507,7 @@ class DocumentController extends Controller
 
     public function print(Document $document)
     {
-        $document->load(['department', 'creator', 'approver']);
+        $document->load(['department', 'creator', 'approver', 'signer']);
         return view('admin.documents.print', compact('document'));
     }
 }
