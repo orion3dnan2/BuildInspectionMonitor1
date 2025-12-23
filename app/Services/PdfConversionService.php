@@ -6,9 +6,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\UploadedFile;
 use PhpOffice\PhpWord\IOFactory as WordIOFactory;
-use PhpOffice\PhpWord\Settings as PhpWordSettings;
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use Mpdf\Mpdf;
 use setasign\Fpdi\Tcpdf\Fpdi;
 
 class PdfConversionService
@@ -94,38 +92,7 @@ class PdfConversionService
         }
 
         try {
-            Log::info('Starting Word to PDF conversion using PhpWord + Dompdf');
-            
-            PhpWordSettings::setPdfRendererName(PhpWordSettings::PDF_RENDERER_DOMPDF);
-            PhpWordSettings::setPdfRendererPath(base_path('vendor/dompdf/dompdf'));
-            
-            $phpWord = WordIOFactory::load($fullPath);
-            
-            $finalPdfName = $outputName . '.pdf';
-            $finalPdfPath = $this->pdfPath . '/' . $finalPdfName;
-            $fullPdfPath = Storage::path($finalPdfPath);
-            
-            $pdfWriter = WordIOFactory::createWriter($phpWord, 'PDF');
-            $pdfWriter->save($fullPdfPath);
-            
-            if (file_exists($fullPdfPath)) {
-                Log::info('Word to PDF conversion successful: ' . $finalPdfPath);
-                return $finalPdfPath;
-            }
-            
-            Log::error('PDF file was not created after conversion');
-            return null;
-            
-        } catch (\Exception $e) {
-            Log::error('PhpWord conversion failed: ' . $e->getMessage());
-            return $this->convertWordToPdfFallback($fullPath, $outputName);
-        }
-    }
-
-    protected function convertWordToPdfFallback(string $fullPath, string $outputName): ?string
-    {
-        try {
-            Log::info('Trying fallback conversion: Word -> HTML -> PDF');
+            Log::info('Starting Word to PDF conversion using PhpWord + mPDF');
             
             $phpWord = WordIOFactory::load($fullPath);
             
@@ -136,37 +103,104 @@ class PdfConversionService
             $htmlContent = file_get_contents($tempHtmlPath);
             @unlink($tempHtmlPath);
             
-            $htmlContent = '<html dir="rtl"><head><meta charset="UTF-8"><style>
-                body { font-family: DejaVu Sans, Arial, sans-serif; direction: rtl; text-align: right; }
-            </style></head><body>' . $htmlContent . '</body></html>';
+            $htmlContent = $this->wrapHtmlForArabic($htmlContent);
             
-            $options = new Options();
-            $options->set('isRemoteEnabled', true);
-            $options->set('isHtml5ParserEnabled', true);
-            $options->set('defaultFont', 'DejaVu Sans');
+            $tempDir = storage_path('app/mpdf_temp');
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
             
-            $dompdf = new Dompdf($options);
-            $dompdf->loadHtml($htmlContent, 'UTF-8');
-            $dompdf->setPaper('A4', 'portrait');
-            $dompdf->render();
+            $mpdf = new Mpdf([
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'default_font' => 'dejavusans',
+                'tempDir' => $tempDir,
+                'autoArabic' => true,
+                'autoLangToFont' => true,
+            ]);
+            
+            $mpdf->SetDirectionality('rtl');
+            $mpdf->WriteHTML($htmlContent);
             
             $finalPdfName = $outputName . '.pdf';
             $finalPdfPath = $this->pdfPath . '/' . $finalPdfName;
             $fullPdfPath = Storage::path($finalPdfPath);
             
-            file_put_contents($fullPdfPath, $dompdf->output());
+            $mpdf->Output($fullPdfPath, \Mpdf\Output\Destination::FILE);
             
             if (file_exists($fullPdfPath)) {
-                Log::info('Fallback Word to PDF conversion successful: ' . $finalPdfPath);
+                Log::info('Word to PDF conversion successful with mPDF: ' . $finalPdfPath);
                 return $finalPdfPath;
             }
             
+            Log::error('PDF file was not created after conversion');
             return null;
             
         } catch (\Exception $e) {
-            Log::error('Fallback conversion also failed: ' . $e->getMessage());
+            Log::error('mPDF conversion failed: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return null;
         }
+    }
+
+    protected function wrapHtmlForArabic(string $htmlContent): string
+    {
+        if (stripos($htmlContent, '<html') === false) {
+            $htmlContent = '<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: "DejaVu Sans", "Arial", sans-serif;
+            direction: rtl;
+            text-align: right;
+            line-height: 1.8;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            direction: rtl;
+        }
+        td, th {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: right;
+        }
+        p {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>' . $htmlContent . '</body></html>';
+        } else {
+            $htmlContent = preg_replace('/<html([^>]*)>/i', '<html$1 dir="rtl" lang="ar">', $htmlContent);
+            
+            $styleBlock = '<style>
+                body {
+                    font-family: "DejaVu Sans", "Arial", sans-serif;
+                    direction: rtl;
+                    text-align: right;
+                    line-height: 1.8;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    direction: rtl;
+                }
+                td, th {
+                    border: 1px solid #000;
+                    padding: 8px;
+                    text-align: right;
+                }
+            </style>';
+            
+            if (stripos($htmlContent, '</head>') !== false) {
+                $htmlContent = str_ireplace('</head>', $styleBlock . '</head>', $htmlContent);
+            }
+        }
+        
+        return $htmlContent;
     }
 
     public function saveSignatureImage(UploadedFile $file): ?string
