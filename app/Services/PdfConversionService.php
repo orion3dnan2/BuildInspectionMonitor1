@@ -22,10 +22,10 @@ class PdfConversionService
     protected function ensureDirectoriesExist(): void
     {
         $directories = [
-            Storage::path($this->uploadPath),
-            Storage::path($this->pdfPath),
-            Storage::path($this->signedPath),
-            Storage::path($this->signaturesPath),
+            $this->getFullPath($this->uploadPath),
+            $this->getFullPath($this->pdfPath),
+            $this->getFullPath($this->signedPath),
+            $this->getFullPath($this->signaturesPath),
             storage_path('app/libreoffice_profile'),
         ];
 
@@ -34,6 +34,11 @@ class PdfConversionService
                 mkdir($dir, 0755, true);
             }
         }
+    }
+
+    protected function getFullPath(string $relativePath): string
+    {
+        return Storage::path($relativePath);
     }
 
     public function uploadAndConvert(UploadedFile $file, ?string $customName = null): array
@@ -58,133 +63,114 @@ class PdfConversionService
 
         if ($extension === 'pdf') {
             $result['pdf_path'] = $originalPath;
-            $result['message'] = 'PDF file uploaded successfully';
+            $result['message'] = 'تم رفع ملف PDF بنجاح';
         } elseif (in_array($extension, ['doc', 'docx'])) {
-            $convertedPdf = $this->convertWordToPdfWithLibreOffice($originalPath, $uniqueName);
+            $convertedPdf = $this->convertWithLibreOffice($originalPath, $uniqueName);
             if ($convertedPdf) {
                 $result['pdf_path'] = $convertedPdf;
-                $result['message'] = 'Word document converted to PDF successfully';
+                $result['message'] = 'تم تحويل ملف Word إلى PDF بنجاح';
             } else {
                 $result['success'] = false;
-                $result['message'] = 'Failed to convert Word document to PDF. Please upload a PDF file directly.';
+                $result['message'] = 'فشل في تحويل ملف Word إلى PDF. يرجى رفع ملف PDF مباشرة.';
             }
         } else {
             $result['success'] = false;
-            $result['message'] = 'Unsupported file type: ' . $extension;
+            $result['message'] = 'نوع الملف غير مدعوم: ' . $extension;
         }
 
         return $result;
     }
 
-    public function convertWordToPdfWithLibreOffice(string $storagePath, string $outputName): ?string
+    protected function convertWithLibreOffice(string $storagePath, string $outputName): ?string
     {
-        $fullPath = Storage::path($storagePath);
-        $outputDir = Storage::path($this->pdfPath);
+        $fullInputPath = $this->getFullPath($storagePath);
+        $outputDir = $this->getFullPath($this->pdfPath);
         $profileDir = storage_path('app/libreoffice_profile');
         
+        if (!file_exists($fullInputPath)) {
+            Log::error('Source file not found: ' . $fullInputPath);
+            return null;
+        }
+
         if (!file_exists($outputDir)) {
             mkdir($outputDir, 0755, true);
         }
 
-        if (!file_exists($fullPath)) {
-            Log::error('Source file not found for conversion: ' . $fullPath);
+        $libreOfficeBin = $this->findLibreOffice();
+        if (!$libreOfficeBin) {
+            Log::error('LibreOffice not found');
             return null;
         }
 
-        $libreOfficePath = $this->findLibreOffice();
-        if (!$libreOfficePath) {
-            Log::error('LibreOffice not found in system');
-            return null;
-        }
+        Log::info('Converting with LibreOffice: ' . $fullInputPath);
+        
+        $env = [
+            'HOME=' . storage_path('app'),
+            'SAL_USE_VCLPLUGIN=svp',
+        ];
+        
+        $command = sprintf(
+            'env %s %s --headless --nofirststartwizard --norestore ' .
+            '-env:UserInstallation=file://%s ' .
+            '--convert-to pdf ' .
+            '--outdir %s ' .
+            '%s 2>&1',
+            implode(' ', $env),
+            escapeshellarg($libreOfficeBin),
+            $profileDir,
+            escapeshellarg($outputDir),
+            escapeshellarg($fullInputPath)
+        );
 
-        try {
-            Log::info('Starting Word to PDF conversion using LibreOffice');
-            
-            putenv('HOME=' . storage_path('app'));
-            putenv('SAL_USE_VCLPLUGIN=svp');
-            
-            $command = sprintf(
-                '%s --headless --nofirststartwizard --norestore ' .
-                '-env:UserInstallation=file://%s ' .
-                '--convert-to pdf:writer_pdf_Export ' .
-                '--outdir %s %s 2>&1',
-                escapeshellcmd($libreOfficePath),
-                escapeshellarg($profileDir),
-                escapeshellarg($outputDir),
-                escapeshellarg($fullPath)
-            );
+        Log::info('LibreOffice command: ' . $command);
+        
+        $output = [];
+        $returnCode = 0;
+        exec($command, $output, $returnCode);
+        
+        Log::info('LibreOffice output: ' . implode("\n", $output));
+        Log::info('LibreOffice return code: ' . $returnCode);
 
-            Log::info('LibreOffice command: ' . $command);
+        $inputBasename = pathinfo($fullInputPath, PATHINFO_FILENAME);
+        $expectedPdf = $outputDir . '/' . $inputBasename . '.pdf';
+        
+        if (file_exists($expectedPdf)) {
+            $finalPdfPath = $this->pdfPath . '/' . $outputName . '.pdf';
+            $finalFullPath = $this->getFullPath($finalPdfPath);
             
-            $output = [];
-            $returnCode = 0;
-            exec($command, $output, $returnCode);
-            
-            Log::info('LibreOffice output: ' . implode("\n", $output));
-            Log::info('LibreOffice return code: ' . $returnCode);
-
-            $originalBasename = pathinfo($fullPath, PATHINFO_FILENAME);
-            $expectedPdfPath = $outputDir . '/' . $originalBasename . '.pdf';
-            
-            if (file_exists($expectedPdfPath)) {
-                $finalPdfName = $outputName . '.pdf';
-                $finalPdfPath = $this->pdfPath . '/' . $finalPdfName;
-                $fullFinalPath = Storage::path($finalPdfPath);
-                
-                if ($expectedPdfPath !== $fullFinalPath) {
-                    rename($expectedPdfPath, $fullFinalPath);
-                }
-                
-                Log::info('Word to PDF conversion successful: ' . $finalPdfPath);
-                return $finalPdfPath;
+            if ($expectedPdf !== $finalFullPath) {
+                rename($expectedPdf, $finalFullPath);
             }
-
-            $pdfFiles = glob($outputDir . '/*.pdf');
-            if (!empty($pdfFiles)) {
-                usort($pdfFiles, function($a, $b) {
-                    return filemtime($b) - filemtime($a);
-                });
-                $latestPdf = $pdfFiles[0];
-                $finalPdfName = $outputName . '.pdf';
-                $finalPdfPath = $this->pdfPath . '/' . $finalPdfName;
-                rename($latestPdf, Storage::path($finalPdfPath));
-                Log::info('Word to PDF conversion successful (fallback): ' . $finalPdfPath);
-                return $finalPdfPath;
-            }
-
-            Log::error('PDF file was not created after LibreOffice conversion');
-            return null;
             
-        } catch (\Exception $e) {
-            Log::error('LibreOffice conversion failed: ' . $e->getMessage());
-            return null;
+            Log::info('LibreOffice conversion successful: ' . $finalPdfPath);
+            return $finalPdfPath;
         }
+
+        $pdfFiles = glob($outputDir . '/*.pdf');
+        if (!empty($pdfFiles)) {
+            usort($pdfFiles, fn($a, $b) => filemtime($b) - filemtime($a));
+            $latestPdf = $pdfFiles[0];
+            $finalPdfPath = $this->pdfPath . '/' . $outputName . '.pdf';
+            rename($latestPdf, $this->getFullPath($finalPdfPath));
+            Log::info('LibreOffice conversion successful (fallback): ' . $finalPdfPath);
+            return $finalPdfPath;
+        }
+
+        Log::error('LibreOffice conversion failed - no PDF output');
+        return null;
     }
 
     protected function findLibreOffice(): ?string
     {
-        $paths = [
-            '/nix/store/s77ki6j3if918jk373md4aajqii531rd-libreoffice-24.8.7.2-wrapped/bin/libreoffice',
-            'libreoffice',
-            'soffice',
-            '/usr/bin/libreoffice',
-            '/usr/bin/soffice',
-        ];
-
-        foreach ($paths as $path) {
-            $output = [];
-            $returnCode = 0;
-            exec('which ' . escapeshellarg($path) . ' 2>/dev/null', $output, $returnCode);
-            if ($returnCode === 0 && !empty($output)) {
-                return trim($output[0]);
-            }
-            
-            if (file_exists($path) && is_executable($path)) {
-                return $path;
-            }
+        $output = [];
+        $returnCode = 0;
+        exec('which libreoffice 2>/dev/null', $output, $returnCode);
+        
+        if ($returnCode === 0 && !empty($output)) {
+            return trim($output[0]);
         }
 
-        exec('which libreoffice 2>/dev/null', $output, $returnCode);
+        exec('which soffice 2>/dev/null', $output, $returnCode);
         if ($returnCode === 0 && !empty($output)) {
             return trim($output[0]);
         }
@@ -199,30 +185,28 @@ class PdfConversionService
         $extension = strtolower($file->getClientOriginalExtension());
         
         if (!in_array($extension, ['png', 'jpg', 'jpeg', 'gif'])) {
-            Log::error('Invalid signature image format: ' . $extension);
+            Log::error('Invalid signature format: ' . $extension);
             return null;
         }
         
         $fileName = 'signature_' . uniqid() . '.' . $extension;
-        $path = $file->storeAs($this->signaturesPath, $fileName);
-        
-        return $path;
+        return $file->storeAs($this->signaturesPath, $fileName);
     }
 
     public function addSignatureToPdf(string $pdfPath, string $signatureImagePath, array $options = []): ?string
     {
         $this->ensureDirectoriesExist();
         
-        $fullPdfPath = Storage::path($pdfPath);
-        $fullSignatureImagePath = Storage::path($signatureImagePath);
+        $fullPdfPath = $this->getFullPath($pdfPath);
+        $fullSignaturePath = $this->getFullPath($signatureImagePath);
         
         if (!file_exists($fullPdfPath)) {
-            Log::error('PDF file not found: ' . $fullPdfPath);
+            Log::error('PDF not found: ' . $fullPdfPath);
             return null;
         }
 
-        if (!file_exists($fullSignatureImagePath)) {
-            Log::error('Signature image not found: ' . $fullSignatureImagePath);
+        if (!file_exists($fullSignaturePath)) {
+            Log::error('Signature not found: ' . $fullSignaturePath);
             return null;
         }
 
@@ -246,36 +230,27 @@ class PdfConversionService
                 $pdf->useTemplate($templateId);
                 
                 if ($pageNo == $signaturePage) {
-                    $pdf->Image($fullSignatureImagePath, $signatureX, $signatureY, $signatureWidth);
+                    $pdf->Image($fullSignaturePath, $signatureX, $signatureY, $signatureWidth);
                 }
             }
             
             $signedFileName = 'signed_' . uniqid() . '.pdf';
             $signedPath = $this->signedPath . '/' . $signedFileName;
-            $fullSignedPath = Storage::path($signedPath);
-            
-            if (!file_exists(dirname($fullSignedPath))) {
-                mkdir(dirname($fullSignedPath), 0755, true);
-            }
+            $fullSignedPath = $this->getFullPath($signedPath);
             
             $pdf->Output($fullSignedPath, 'F');
             
             if (!file_exists($fullSignedPath)) {
-                Log::error('Signed PDF was not created');
+                Log::error('Signed PDF not created');
                 return null;
             }
             
+            Log::info('Signature added successfully: ' . $signedPath);
             return $signedPath;
             
         } catch (\Exception $e) {
-            Log::error('Failed to add signature to PDF: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Signature error: ' . $e->getMessage());
             return null;
         }
-    }
-
-    public function getPdfUrl(string $pdfPath): string
-    {
-        return route('documents.pdf.view', ['path' => base64_encode($pdfPath)]);
     }
 }
