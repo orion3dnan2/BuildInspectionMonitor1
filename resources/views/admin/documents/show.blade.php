@@ -333,19 +333,19 @@
             <div class="p-4 border-b border-slate-200 flex items-center justify-between">
                 <h2 class="text-lg font-bold text-slate-800">عرض المستند</h2>
                 <div class="flex items-center gap-2">
-                    @if($document->isWordDocument())
-                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
-                        </svg>
-                        Word
-                    </span>
-                    @elseif($document->getViewablePdfPath())
+                    @if($document->getViewablePdfPath())
                     <span class="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 text-xs rounded">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
                         </svg>
                         PDF
+                    </span>
+                    @elseif($document->isWordDocument())
+                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+                        </svg>
+                        Word
                     </span>
                     @endif
                     @if($document->hasViewableFile())
@@ -359,7 +359,18 @@
                 </div>
             </div>
             
-            @if($document->isWordDocument())
+            @if($document->getViewablePdfPath())
+            <div class="relative bg-slate-100" style="height: 700px;">
+                <iframe 
+                    id="pdfViewer"
+                    src="/pdfjs/web/viewer.html?file={{ urlencode(route('admin.documents.pdf', $document)) }}"
+                    width="100%" 
+                    height="100%" 
+                    style="border: none;"
+                    allowfullscreen>
+                </iframe>
+            </div>
+            @elseif($document->isWordDocument())
             <div id="wordContainer" class="relative bg-white" style="height: 700px; overflow: auto;">
                 <div id="wordLoading" class="absolute inset-0 flex items-center justify-center bg-slate-50">
                     <div class="text-center">
@@ -371,17 +382,6 @@
                     </div>
                 </div>
                 <div id="wordContent" class="p-4" dir="rtl" style="font-family: 'Amiri', 'Arabic Typesetting', 'Traditional Arabic', serif;"></div>
-            </div>
-            @elseif($document->getViewablePdfPath())
-            <div class="relative bg-slate-100" style="height: 700px;">
-                <iframe 
-                    id="pdfViewer"
-                    src="/pdfjs/web/viewer.html?file={{ urlencode(route('admin.documents.pdf', $document)) }}"
-                    width="100%" 
-                    height="100%" 
-                    style="border: none;"
-                    allowfullscreen>
-                </iframe>
             </div>
             @else
             <div class="p-12 text-center">
@@ -445,7 +445,7 @@
     </div>
 </div>
 
-@if($document->isWordDocument())
+@if($document->isWordDocument() && !$document->getViewablePdfPath())
 <script src="https://unpkg.com/docx-preview@0.3.3/dist/docx-preview.min.js"></script>
 <script>
     function loadWordDocument() {
