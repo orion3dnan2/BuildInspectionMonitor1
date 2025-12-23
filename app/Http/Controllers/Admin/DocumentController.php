@@ -91,7 +91,7 @@ class DocumentController extends Controller
     public function show(Document $document)
     {
         $document->load(['department', 'creator', 'assignedUser', 'approver', 'signer', 'workflows.fromUser', 'workflows.toUser']);
-        $users = User::where('is_active', true)->orderBy('name')->get();
+        $users = User::orderBy('name')->get();
         return view('admin.documents.show', compact('document', 'users'));
     }
 
