@@ -104,10 +104,17 @@ class PdfConversionService
 
         Log::info('Converting with LibreOffice: ' . $fullInputPath);
         
+        $javaHome = $this->findJavaHome();
+        
         $env = [
             'HOME=' . storage_path('app'),
             'SAL_USE_VCLPLUGIN=svp',
         ];
+        
+        if ($javaHome) {
+            $env[] = 'JAVA_HOME=' . $javaHome;
+            $env[] = 'PATH=' . $javaHome . '/bin:' . getenv('PATH');
+        }
         
         $command = sprintf(
             'env %s %s --headless --nofirststartwizard --norestore ' .
@@ -173,6 +180,20 @@ class PdfConversionService
         exec('which soffice 2>/dev/null', $output, $returnCode);
         if ($returnCode === 0 && !empty($output)) {
             return trim($output[0]);
+        }
+
+        return null;
+    }
+
+    protected function findJavaHome(): ?string
+    {
+        $output = [];
+        $returnCode = 0;
+        exec('which java 2>/dev/null', $output, $returnCode);
+        
+        if ($returnCode === 0 && !empty($output)) {
+            $javaPath = trim($output[0]);
+            return dirname(dirname($javaPath));
         }
 
         return null;
