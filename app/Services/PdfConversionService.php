@@ -6,10 +6,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\UploadedFile;
 use setasign\Fpdi\Fpdi;
+use PhpOffice\PhpWord\IOFactory as WordIOFactory;
+use PhpOffice\PhpWord\Settings as PhpWordSettings;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 class PdfConversionService
 {
-    protected string $libreOfficePath = 'libreoffice';
     protected string $uploadPath = 'uploads';
     protected string $pdfPath = 'pdfs';
     protected string $signedPath = 'signed';
@@ -32,14 +35,6 @@ class PdfConversionService
                 mkdir($dir, 0755, true);
             }
         }
-    }
-
-    public function isLibreOfficeAvailable(): bool
-    {
-        $output = [];
-        $returnCode = 0;
-        exec('which libreoffice 2>/dev/null', $output, $returnCode);
-        return $returnCode === 0 && !empty($output);
     }
 
     public function uploadAndConvert(UploadedFile $file, ?string $customName = null): array
@@ -66,14 +61,7 @@ class PdfConversionService
             $result['pdf_path'] = $originalPath;
             $result['message'] = 'PDF file uploaded successfully';
         } elseif (in_array($extension, ['doc', 'docx'])) {
-            if (!$this->isLibreOfficeAvailable()) {
-                Log::warning('LibreOffice not available, storing original file without conversion');
-                $result['pdf_path'] = null;
-                $result['message'] = 'Word document uploaded but conversion not available';
-                return $result;
-            }
-            
-            $convertedPdf = $this->convertToPdf($originalPath, $uniqueName);
+            $convertedPdf = $this->convertWordToPdf($originalPath, $uniqueName);
             if ($convertedPdf) {
                 $result['pdf_path'] = $convertedPdf;
                 $result['message'] = 'Word document converted to PDF successfully';
@@ -89,7 +77,7 @@ class PdfConversionService
         return $result;
     }
 
-    public function convertToPdf(string $storagePath, string $outputName): ?string
+    public function convertWordToPdf(string $storagePath, string $outputName): ?string
     {
         $fullPath = Storage::path($storagePath);
         $outputDir = Storage::path($this->pdfPath);
@@ -103,48 +91,83 @@ class PdfConversionService
             return null;
         }
 
-        $command = sprintf(
-            '%s --headless --convert-to pdf --outdir %s %s 2>&1',
-            $this->libreOfficePath,
-            escapeshellarg($outputDir),
-            escapeshellarg($fullPath)
-        );
-
-        Log::info('LibreOffice conversion command: ' . $command);
-        
-        exec($command, $output, $returnCode);
-        
-        Log::info('LibreOffice output: ' . implode("\n", $output));
-        Log::info('LibreOffice return code: ' . $returnCode);
-
-        $originalBasename = pathinfo($fullPath, PATHINFO_FILENAME);
-        $expectedPdfPath = $outputDir . '/' . $originalBasename . '.pdf';
-        
-        if (file_exists($expectedPdfPath)) {
+        try {
+            Log::info('Starting Word to PDF conversion using PhpWord + Dompdf');
+            
+            PhpWordSettings::setPdfRendererName(PhpWordSettings::PDF_RENDERER_DOMPDF);
+            PhpWordSettings::setPdfRendererPath(base_path('vendor/dompdf/dompdf'));
+            
+            $phpWord = WordIOFactory::load($fullPath);
+            
             $finalPdfName = $outputName . '.pdf';
             $finalPdfPath = $this->pdfPath . '/' . $finalPdfName;
+            $fullPdfPath = Storage::path($finalPdfPath);
             
-            if ($expectedPdfPath !== Storage::path($finalPdfPath)) {
-                rename($expectedPdfPath, Storage::path($finalPdfPath));
+            $pdfWriter = WordIOFactory::createWriter($phpWord, 'PDF');
+            $pdfWriter->save($fullPdfPath);
+            
+            if (file_exists($fullPdfPath)) {
+                Log::info('Word to PDF conversion successful: ' . $finalPdfPath);
+                return $finalPdfPath;
             }
             
-            return $finalPdfPath;
+            Log::error('PDF file was not created after conversion');
+            return null;
+            
+        } catch (\Exception $e) {
+            Log::error('PhpWord conversion failed: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return $this->convertWordToPdfFallback($fullPath, $outputName);
         }
+    }
 
-        $pdfFiles = glob($outputDir . '/*.pdf');
-        if (!empty($pdfFiles)) {
-            usort($pdfFiles, function($a, $b) {
-                return filemtime($b) - filemtime($a);
-            });
-            $latestPdf = $pdfFiles[0];
+    protected function convertWordToPdfFallback(string $fullPath, string $outputName): ?string
+    {
+        try {
+            Log::info('Trying fallback conversion: Word -> HTML -> PDF');
+            
+            $phpWord = WordIOFactory::load($fullPath);
+            
+            $tempHtmlPath = storage_path('app/temp_' . uniqid() . '.html');
+            $htmlWriter = WordIOFactory::createWriter($phpWord, 'HTML');
+            $htmlWriter->save($tempHtmlPath);
+            
+            $htmlContent = file_get_contents($tempHtmlPath);
+            @unlink($tempHtmlPath);
+            
+            $htmlContent = '<html dir="rtl"><head><meta charset="UTF-8"><style>
+                body { font-family: DejaVu Sans, Arial, sans-serif; direction: rtl; text-align: right; }
+                * { unicode-bidi: bidi-override; }
+            </style></head><body>' . $htmlContent . '</body></html>';
+            
+            $options = new Options();
+            $options->set('isRemoteEnabled', true);
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('defaultFont', 'DejaVu Sans');
+            
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($htmlContent, 'UTF-8');
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+            
             $finalPdfName = $outputName . '.pdf';
             $finalPdfPath = $this->pdfPath . '/' . $finalPdfName;
-            rename($latestPdf, Storage::path($finalPdfPath));
-            return $finalPdfPath;
+            $fullPdfPath = Storage::path($finalPdfPath);
+            
+            file_put_contents($fullPdfPath, $dompdf->output());
+            
+            if (file_exists($fullPdfPath)) {
+                Log::info('Fallback Word to PDF conversion successful: ' . $finalPdfPath);
+                return $finalPdfPath;
+            }
+            
+            return null;
+            
+        } catch (\Exception $e) {
+            Log::error('Fallback conversion also failed: ' . $e->getMessage());
+            return null;
         }
-
-        Log::error('PDF conversion failed - no output file found');
-        return null;
     }
 
     public function addSignatureToPdf(string $pdfPath, string $signatureData, array $options = []): ?string
