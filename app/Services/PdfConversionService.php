@@ -70,8 +70,8 @@ class PdfConversionService
                 $result['pdf_path'] = $convertedPdf;
                 $result['message'] = 'تم تحويل ملف Word إلى PDF بنجاح';
             } else {
-                $result['success'] = false;
-                $result['message'] = 'فشل في تحويل ملف Word إلى PDF. يرجى رفع ملف PDF مباشرة.';
+                $result['pdf_path'] = null;
+                $result['message'] = 'تم رفع ملف Word بنجاح (سيتم عرضه مباشرة)';
             }
         } else {
             $result['success'] = false;
