@@ -169,4 +169,29 @@ class Document extends Model
         return $this->is_signed && 
                in_array($this->status, ['signed', 'pending_approval']);
     }
+
+    public function isWordDocument(): bool
+    {
+        $path = $this->original_file_path ?? $this->file_path;
+        if (!$path) return false;
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        return in_array($ext, ['doc', 'docx']);
+    }
+
+    public function isPdfDocument(): bool
+    {
+        $path = $this->original_file_path ?? $this->file_path;
+        if (!$path) return false;
+        return strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'pdf';
+    }
+
+    public function getOriginalFilePath(): ?string
+    {
+        return $this->original_file_path ?? $this->file_path;
+    }
+
+    public function hasViewableFile(): bool
+    {
+        return $this->getOriginalFilePath() !== null || $this->getViewablePdfPath() !== null;
+    }
 }

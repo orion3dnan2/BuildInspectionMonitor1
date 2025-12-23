@@ -220,6 +220,31 @@ class DocumentController extends Controller
         ]);
     }
 
+    public function viewWord(Document $document)
+    {
+        $filePath = $document->getOriginalFilePath();
+        
+        if (!$filePath || !Storage::exists($filePath)) {
+            abort(404, 'Word file not found');
+        }
+
+        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        if (!in_array($ext, ['doc', 'docx'])) {
+            abort(400, 'Not a Word document');
+        }
+
+        $content = Storage::get($filePath);
+        $mimeType = $ext === 'docx' 
+            ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            : 'application/msword';
+        
+        return Response::make($content, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . $document->document_number . '.' . $ext . '"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+        ]);
+    }
+
     public function sign(Request $request, Document $document)
     {
         if ($document->is_signed) {

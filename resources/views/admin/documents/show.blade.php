@@ -332,17 +332,47 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="p-4 border-b border-slate-200 flex items-center justify-between">
                 <h2 class="text-lg font-bold text-slate-800">عرض المستند</h2>
-                @if($document->getViewablePdfPath())
-                <a href="{{ route('admin.documents.download', $document) }}" class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm rounded-lg transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    تحميل
-                </a>
-                @endif
+                <div class="flex items-center gap-2">
+                    @if($document->isWordDocument())
+                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+                        </svg>
+                        Word
+                    </span>
+                    @elseif($document->getViewablePdfPath())
+                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 text-xs rounded">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+                        </svg>
+                        PDF
+                    </span>
+                    @endif
+                    @if($document->hasViewableFile())
+                    <a href="{{ route('admin.documents.download', $document) }}" class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm rounded-lg transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        تحميل
+                    </a>
+                    @endif
+                </div>
             </div>
             
-            @if($document->getViewablePdfPath())
+            @if($document->isWordDocument())
+            <div id="wordContainer" class="relative bg-white" style="height: 700px; overflow: auto;">
+                <div id="wordLoading" class="absolute inset-0 flex items-center justify-center bg-slate-50">
+                    <div class="text-center">
+                        <svg class="animate-spin w-10 h-10 mx-auto text-blue-500 mb-3" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="text-slate-600">جاري تحميل المستند...</p>
+                    </div>
+                </div>
+                <div id="wordContent" class="p-4" dir="rtl" style="font-family: 'Amiri', 'Arabic Typesetting', 'Traditional Arabic', serif;"></div>
+            </div>
+            @elseif($document->getViewablePdfPath())
             <div class="relative bg-slate-100" style="height: 700px;">
                 <iframe 
                     id="pdfViewer"
@@ -358,7 +388,7 @@
                 <svg class="w-16 h-16 mx-auto text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                <p class="mt-4 text-slate-500">لا يوجد ملف PDF مرفق</p>
+                <p class="mt-4 text-slate-500">لا يوجد ملف مرفق</p>
             </div>
             @endif
         </div>
@@ -414,6 +444,59 @@
         @endif
     </div>
 </div>
+
+@if($document->isWordDocument())
+<script src="https://unpkg.com/docx-preview@0.3.7/dist/docx-preview.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('wordContent');
+        const loading = document.getElementById('wordLoading');
+        const wordUrl = '{{ route("admin.documents.word", $document) }}';
+        
+        fetch(wordUrl)
+            .then(response => {
+                if (!response.ok) throw new Error('فشل في تحميل المستند');
+                return response.arrayBuffer();
+            })
+            .then(arrayBuffer => {
+                return docx.renderAsync(arrayBuffer, container, null, {
+                    className: 'docx-wrapper',
+                    inWrapper: true,
+                    ignoreWidth: false,
+                    ignoreHeight: false,
+                    ignoreFonts: false,
+                    breakPages: true,
+                    ignoreLastRenderedPageBreak: true,
+                    experimental: true,
+                    useBase64URL: true,
+                    renderHeaders: true,
+                    renderFooters: true,
+                    renderFootnotes: true,
+                    renderEndnotes: true,
+                });
+            })
+            .then(() => {
+                loading.style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Error loading Word document:', error);
+                loading.innerHTML = '<div class="text-center"><p class="text-red-500">فشل في تحميل المستند</p><p class="text-sm text-slate-500 mt-2">' + error.message + '</p></div>';
+            });
+    });
+</script>
+<style>
+    #wordContent .docx-wrapper {
+        background: white;
+        padding: 20px;
+    }
+    #wordContent .docx-wrapper > section.docx {
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        margin: 10px auto;
+        background: white;
+        direction: rtl;
+    }
+</style>
+@endif
 
 @if($document->canBeSigned() && !$document->is_signed)
 <script>
