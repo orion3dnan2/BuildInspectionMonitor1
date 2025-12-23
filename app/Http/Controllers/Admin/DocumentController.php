@@ -156,10 +156,9 @@ class DocumentController extends Controller
 
     public function destroy(Document $document)
     {
-        $allowedStatuses = ['draft', 'approved', 'signed'];
-        if (!in_array($document->status, $allowedStatuses)) {
+        if ($document->status !== 'draft') {
             return redirect()->route('admin.documents.index')
-                ->with('error', 'لا يمكن حذف هذا المستند في حالته الحالية');
+                ->with('error', 'لا يمكن حذف مستند غير مسودة');
         }
 
         if ($document->original_file_path) {
