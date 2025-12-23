@@ -118,7 +118,6 @@
                             </svg>
                         </a>
                         @endif
-                        @if($document->status === 'draft')
                         <form action="{{ route('admin.documents.destroy', $document) }}" method="POST" class="inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا المستند؟')">
                             @csrf
                             @method('DELETE')
@@ -128,7 +127,6 @@
                                 </svg>
                             </button>
                         </form>
-                        @endif
                     </div>
                 </td>
             </tr>
