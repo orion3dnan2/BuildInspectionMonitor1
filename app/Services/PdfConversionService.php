@@ -86,6 +86,7 @@ class PdfConversionService
         $fullInputPath = $this->getFullPath($storagePath);
         $outputDir = $this->getFullPath($this->pdfPath);
         $profileDir = storage_path('app/libreoffice_profile');
+        $tempDir = storage_path('app/temp');
         
         if (!file_exists($fullInputPath)) {
             Log::error('Source file not found: ' . $fullInputPath);
@@ -95,6 +96,10 @@ class PdfConversionService
         if (!file_exists($outputDir)) {
             mkdir($outputDir, 0755, true);
         }
+        
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
 
         $libreOfficeBin = $this->findLibreOffice();
         if (!$libreOfficeBin) {
@@ -102,11 +107,19 @@ class PdfConversionService
             return null;
         }
 
-        Log::info('Converting with LibreOffice: ' . $fullInputPath);
+        $extension = pathinfo($fullInputPath, PATHINFO_EXTENSION);
+        $tempFileName = 'convert_' . uniqid() . '.' . $extension;
+        $tempInputPath = $tempDir . '/' . $tempFileName;
+        
+        if (!copy($fullInputPath, $tempInputPath)) {
+            Log::error('Failed to copy file to temp location');
+            return null;
+        }
+
+        Log::info('Converting with LibreOffice: ' . $tempInputPath);
         
         $javaHome = $this->findJavaHome();
         $fontconfigFile = storage_path('app/fontconfig/fonts.conf');
-        $fontconfigCache = storage_path('app/fontconfig/cache');
         
         $env = [
             'HOME=' . storage_path('app'),
@@ -131,7 +144,7 @@ class PdfConversionService
             escapeshellarg($libreOfficeBin),
             $profileDir,
             escapeshellarg($outputDir),
-            escapeshellarg($fullInputPath)
+            escapeshellarg($tempInputPath)
         );
 
         Log::info('LibreOffice command: ' . $command);
@@ -140,19 +153,19 @@ class PdfConversionService
         $returnCode = 0;
         exec($command, $output, $returnCode);
         
+        @unlink($tempInputPath);
+        
         Log::info('LibreOffice output: ' . implode("\n", $output));
         Log::info('LibreOffice return code: ' . $returnCode);
 
-        $inputBasename = pathinfo($fullInputPath, PATHINFO_FILENAME);
-        $expectedPdf = $outputDir . '/' . $inputBasename . '.pdf';
+        $tempBasename = pathinfo($tempInputPath, PATHINFO_FILENAME);
+        $expectedPdf = $outputDir . '/' . $tempBasename . '.pdf';
         
         if (file_exists($expectedPdf)) {
             $finalPdfPath = $this->pdfPath . '/' . $outputName . '.pdf';
             $finalFullPath = $this->getFullPath($finalPdfPath);
             
-            if ($expectedPdf !== $finalFullPath) {
-                rename($expectedPdf, $finalFullPath);
-            }
+            rename($expectedPdf, $finalFullPath);
             
             Log::info('LibreOffice conversion successful: ' . $finalPdfPath);
             return $finalPdfPath;
